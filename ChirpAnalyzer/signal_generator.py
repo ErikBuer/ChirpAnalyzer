@@ -45,6 +45,7 @@ for i in range(np.size(instFreq,0)):
 plt.title("Hilbert Spectrum")
 plt.xlabel('t [s]')
 plt.ylabel('f [Hz]')
+plt.ylim(0,np.divide(Fs,2))
 plt.tight_layout()
 
 plt.show()
