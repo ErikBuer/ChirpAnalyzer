@@ -8,60 +8,33 @@ import rftool.radar as radar
 from rftool.utility import *
 import rftool.utility as util
 
-Fs=np.intc(100e3)           # receiver sample rate
-frameSize=np.float(128e-3)  # seconds
-"""
-a = 10e3
-b = 1e3
-d = 1e3
-c = np.array([10e3,10,1e6,0,a,0,b,0,d,0])
-sig = radar.cascadedIntegralChirpGenerator( frameSize, c, Fs )
-"""
+Fs=np.intc(200e3)           # receiver sample rate
+frameSize=np.float(64e-3)  # seconds
 
-
-"""
-f, t, Sxx = signal.spectrogram(sig, Fs)
-plt.pcolormesh(t, f, Sxx)
-plt.ylabel('Frequency [Hz]')
-plt.xlabel('Time [sec]')
-plt.show()
-
-
-f, Pxx_den = welch(sig, Fs, 'flattop', 1024, scaling='density')
-Pxx_den_dB = pow2db(np.abs(Pxx_den))
-plt.plot(f, Pxx_den_dB)
-plt.grid()
-plt.ylim([-120,0])
-plt.title("Welch PSD Estimate")
-plt.xlabel('frequency [Hz]')
-plt.ylabel('dBW/Hz')
-plt.show()
-"""
 
 # Time domain window for the function to match
-window_f = signal.bartlett(256)
-window_f = np.multiply(np.subtract(window_f, window_f.max()), 100)
-#window_f = np.fft.fft(window_t,2048)/2048
-# Shift and normalize
-
-# Remove infinitesimally small components
-#window_f = util.mag2db(np.maximum(window_f, 1e-10))
-f = np.linspace(-Fs/4, Fs/4, len(window_f))
+chirp = radar.chirp(frameSize, Fs)
+chirp.fftLen = 8192
 
 """
-plt.plot(f, window_f)
-plt.title("Frequency Response")
-plt.ylabel("Normalized magnitude [dB]")
-plt.xlabel("Frequency [Hz]")
-plt.show()
+# Generate target autocorrelation window
+#window_t = signal.chebwin(512, 60)
+#r_xx = chirp.PSD(window_t)
+#r_xx = np.fft.fftshift(r_xx / abs(r_xx).max())
+#r_xx_dB = util.mag2db( r_xx )
 """
 
+# Synthesize the target autocorrelation function
+window_t = signal.chebwin(1024, 60)
+r_xx = np.fft.fft(window_t, chirp.fftLen)
+r_xx = np.abs(np.fft.fftshift(r_xx / abs(r_xx).max()))
+r_xx_dB = util.mag2db(np.maximum(r_xx, 1e-14))
 chirp = radar.chirp(frameSize, Fs)
 
-coeff = chirp.getCoefficients( window_f, f, order=10, symm=True, fftLen = 8192)
+coeff = chirp.getCoefficients( r_xx_dB, order=20, symm=False)
 print( coeff )
 
 sig = chirp.generate()
-radar.ACF(sig, singleSided=False)
-#radar.hilbert_spectrum(np.real(sig), Fs)
+#radar.ACF(sig, singleSided=False)
+radar.hilbert_spectrum(np.real(sig), Fs)
 plt.show()
