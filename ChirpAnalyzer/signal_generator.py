@@ -5,16 +5,15 @@ import analysis as analyze
 import matplotlib.pyplot as plt
 import numpy as np
 import rftool.radar as radar
-from rftool.utility import *
 import rftool.utility as util
 
-Fs=np.intc(200e3)           # receiver sample rate
-frameSize=np.float(64e-3)  # seconds
+Fs=np.intc(500e3)           # receiver sample rate
+frameSize=np.float(10e-3)  # seconds
 
 
 # Time domain window for the function to match
 chirp = radar.chirp(frameSize, Fs)
-chirp.fftLen = 8192
+chirp.fftLen = 1024
 
 """
 # Generate target autocorrelation window
@@ -25,13 +24,13 @@ chirp.fftLen = 8192
 """
 
 # Synthesize the target autocorrelation function
-window_t = signal.chebwin(1024, 60)
+window_t = signal.chebwin(4096, 45)
 r_xx = np.fft.fft(window_t, chirp.fftLen)
 r_xx = np.abs(np.fft.fftshift(r_xx / abs(r_xx).max()))
-r_xx_dB = util.mag2db(np.maximum(r_xx, 1e-14))
+r_xx_dB = util.mag2db(np.maximum(r_xx, 1e-10))
 chirp = radar.chirp(frameSize, Fs)
 
-coeff = chirp.getCoefficients( r_xx_dB, order=20, symm=False)
+coeff = chirp.getCoefficients( r_xx_dB, order=8, symm=True)
 print( coeff )
 
 sig = chirp.generate()
