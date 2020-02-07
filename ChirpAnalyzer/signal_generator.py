@@ -33,7 +33,21 @@ LFM.getCoefficients( window_t, targetBw=160e3, centerFreq=100e3, symm=True, T=T)
 
 signals = np.stack((LFM.sig, NLFM.sig), axis=-1)
 
-radar.ACF(signals)
-radar.hilbert_spectrum(np.real(LFM.sig), Fs)
-radar.hilbert_spectrum(np.real(NLFM.sig), Fs)
+radar.ACF(signals, label=['LFM', 'NLFM'])
+radar.hilbert_spectrum(np.real(LFM.sig), Fs, label='LFM')
+radar.hilbert_spectrum(np.real(NLFM.sig), Fs, label='NLFM')
 plt.show()
+
+
+
+"""
+TODO Generation
+List of parameters to estimate on single chirp
+
+- Try polyfit med standard polygon.
+
+TODO Analyze
+- Skriv i rapport hvordan HH-transform foregår.
+- Lag cyclostationary transform.
+- Vurder Om kurvene skal karakteriseres fra sentrum, eller frs siden (i tid-frekvens).
+"""
