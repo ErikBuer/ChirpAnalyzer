@@ -15,13 +15,14 @@ NLFM = radar.chirp(Fs)
 NLFM.fftLen = 2048
 
 # Synthesize the target autocorrelation function
-window_t = signal.chebwin(np.intc(2048), 60)
+#window_t = signal.chebwin(np.intc(2048), 60)
+window_t = signal.hamming(np.intc(2048))
 #window_t = signal.gaussian(np.intc(2048), 360)
 #window_t = signal.gaussian(np.intc(2048), 400)
 NLFM.getCoefficients( window_t, targetBw=200e3, centerFreq=100e3, T=T)
 
 
-
+"""
 # Time domain window for LFM generation
 LFM = radar.chirp(Fs)
 
@@ -29,25 +30,31 @@ LFM = radar.chirp(Fs)
 window_t = np.array([1,1,1])
 LFM.getCoefficients( window_t, targetBw=200e3, centerFreq=100e3, T=T)
 
-""""
+
 LFMsig = LFM.genFromPoly()
 NLFMsig = NLFM.genFromPoly()
 signals = np.stack((LFMsig, NLFMsig), axis=-1)
 
-radar.ACF(signals, label=['LFM', 'NLFM'])
-radar.hilbert_spectrum(np.real(LFMsig), Fs, label='LFM')
-radar.hilbert_spectrum(np.real(NLFMsig), Fs, label='NLFM')
 
-radar.hilbert_spectrum(np.real(NLFM.modulate([1,1,1,1,0,1,0,1])), Fs, label='NLFM')
+radar.ACF(signals, label=['LFM', 'NLFM'])
+#radar.hilbert_spectrum(np.real(LFMsig), Fs, label='LFM')
+radar.hilbert_spectrum(np.real(NLFMsig), Fs, label='NLFM')
 """
-NLFM.demodulate(NLFM.modulate())
+
+modSig = NLFM.modulate()
+
+radar.hilbert_spectrum(np.real(modSig), Fs, label='NLFM')
+
+
+radar.FAM(modSig, Fs = Fs, plot=True)
 
 plt.show()
 
 
 """
 TODO Generation
-- Modulate signal
+- Generate binary files
+- Add noise
 
 TODO Analyze
 - List of parameters to estimate on single chirp
