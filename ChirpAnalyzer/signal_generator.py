@@ -1,70 +1,84 @@
 from scipy.signal import chirp, sweep_poly, spectrogram, welch
 from scipy.special import factorial
+from waveform import *  # waveform object
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 import numpy as np
 import rftool.radar as radar
 import rftool.utility as util
+import pickle
+import random
 
 Fs=np.intc(802e3) # receiver sample rate
-T=np.float(6e-3)  # Pulse duration
+
+for i in range(0, 1000):
+    print("Iteration", i)
+
+    T=np.float(6e-3)  # Pulse duration
+    # Time domain window for NLFM generation
+    NLFM = radar.chirp(Fs)
+    NLFM.fftLen = 2048
+
+    sigObj = waveform()
+    sigObj.Fs = Fs
 
 
-# Time domain window for NLFM generation
-NLFM = radar.chirp(Fs)
-NLFM.fftLen = 2048
+    # Synthesize the target autocorrelation function
+    #window_t = signal.chebwin(np.intc(2048), 60)
+    window_t = signal.hamming(np.intc(2048))
+    #window_t = signal.gaussian(np.intc(2048), 360)
+    #window_t = signal.gaussian(np.intc(2048), 400)
 
-# Synthesize the target autocorrelation function
-#window_t = signal.chebwin(np.intc(2048), 60)
-window_t = signal.hamming(np.intc(2048))
-#window_t = signal.gaussian(np.intc(2048), 360)
-#window_t = signal.gaussian(np.intc(2048), 400)
+    fStart = random.uniform(10e3,100e3)
+    fStop = fStart+random.uniform(10e3,100e3)
+    fCenter = fStop-(fStop-fStart)/2
 
-NLFM.getCoefficients( window_t, targetBw=100e3, centerFreq=100e3, T=T)
+    sigObj.fCenter = fCenter
+    sigObj.fStart = fStart
+    sigObj.fStop = fStop
 
+    sigObj.polynomial = NLFM.getCoefficients( window_t, targetBw=fStop-fStart, centerFreq=fCenter, T=T)
+    sigObj.omega_t = NLFM.targetOmega_t
+
+
+    # Write to binary file
+    path = "../waveforms/"
+    filename = str(i)
+    destination = path + filename + ".pkl"
+
+    # Save sigObj to binary file
+    with open(destination,'wb') as f:
+        pickle.dump(sigObj, f)
+
+    """
+    snrVector = np.linspace(0, -70, 71, dtype=int)
+    for SNR in snrVector:
+        sigObj.SNR = SNR
+
+        package = np.random.randint(0, 1, 32)
+        modSig = NLFM.modulate( package )
+        modSig = util.wgnSnr( modSig, SNR)
+        sigObj.timeSeries = modSig
+
+        # Write to binary file
+        path = "../wavefrorms/"
+        filename = str(i)+"_"+ str(SNR)
+        destination = path + filename + ".pkl"
+
+
+        # Save sigObj to binary file
+        with open(destination,'wb') as f:
+            pickle.dump(sigObj, f)
+    """
+
+    
 
 """
-LFM = radar.chirp(Fs)
-
-# Generate linear chirp
-window_t = np.array([1,1,1])
-LFM.getCoefficients( window_t, targetBw=200e3, centerFreq=100e3, T=T)
-
-LFMsig = LFM.genNumerical()
-NLFMsig = NLFM.genFromPoly()
-signals = np.stack((LFMsig, NLFMsig), axis=-1)
-
-radar.ACF(signals, label=['LFM', 'NLFM'])
-#radar.hilbert_spectrum(np.real(LFMsig), Fs, label='LFM')
-radar.hilbert_spectrum(np.real(NLFMsig), Fs, label='NLFM')
-"""
-
-package = np.random.randint(0, 1, 32)
-modSig = NLFM.modulate( package )
-modSig = util.wgnSnr( modSig, -59) #-53
-util.welch(modSig, Fs=Fs)
-
-#radar.hilbert_spectrum(np.real(modSig), Fs, label='NLFM')
-
-
-SCD, f, alpha = radar.FAM(modSig, Fs = Fs, plot=False, method='conj', scale='linear')
-radar.cyclicEstimator( SCD, f, alpha )
-
-plt.show()
-
-
-"""
-TODO Generation
-- Generate binary files
-
 TODO Analyze
-- Time domain multiplication of frequency fomain triangle window convolution. For IF and symbol rate estimation.
-- Bandwidth estimation
-
 - List of parameters to estimate on single chirp
 - Skriv i rapport hvordan HH-transform foregår.
 - Vurder Om kurvene skal karakteriseres fra sentrum, eller frs siden (i tid-frekvens).
 
 TODO Report
-- How chich parameters in FAM decides the estimation resolution?
+- Which parameters in FAM decides the estimation resolution?
 """
