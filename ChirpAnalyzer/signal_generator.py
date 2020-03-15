@@ -42,9 +42,9 @@ for i in range(0, 1000):
 
 
     # Write to binary file
-    path = "../waveforms/"
+    path = '../../waveforms/'
     filename = str(i)
-    destination = path + filename + ".pkl"
+    destination = path + filename + '.pkl'
 
     # Save sigObj to binary file
     with open(destination,'wb') as f:

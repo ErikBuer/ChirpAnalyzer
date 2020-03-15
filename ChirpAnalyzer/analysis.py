@@ -22,14 +22,16 @@ def EbN0toSNRdB(EbN0, M, Fs, Fsymb):
     Fs is the sample rate of the signal
     Fsymb is the symbol rate of the signal (pulse rate)
     """
-    return util.pow2db(np.multiply(EbN0, Fsymb*np.log2(M)/Fs))
+    return util.pow2db(np.multiply(util.db2pow(EbN0), Fsymb*np.log2(M)/Fs))
 
 
 # find number of files in folder
-path = "../waveforms/"
-path, dirs, files = next(os.walk(path))
+path = '../../waveforms/'
+
+
+path, dirs, files = os.walk(path).__next__()
+
 file_count = len(files)
-print(file_count)
 nIterations = file_count
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
@@ -78,16 +80,16 @@ R_symbEstimateVector = np.mean(np.power(R_symbEstimate, 2), 0)
 
 
 plt.figure()
-plt.plot(snrVector, fCenterEstimateVector)
+plt.plot(EbN0Vector, fCenterEstimateVector)
 plt.title("Center Frequency Estimation Error")
-plt.xlabel('SNR')
+plt.xlabel('E_b/N_0')
 plt.ylabel('MSE')
 plt.tight_layout()
 
 plt.figure()
-plt.plot(snrVector, R_symbEstimateVector)
+plt.plot(EbN0Vector, R_symbEstimateVector)
 plt.title("Symbol Rate Estimation Error")
-plt.xlabel('SNR')
+plt.xlabel('E_b/N_0')
 plt.ylabel('MSE')
 plt.tight_layout()
 
