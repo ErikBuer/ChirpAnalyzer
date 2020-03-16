@@ -11,7 +11,7 @@ import random
 
 Fs=np.intc(802e3) # receiver sample rate
 
-for i in range(0, 1000):
+for i in range(1000, 5000):
     print("Iteration", i)
 
     T=np.float(6e-3)  # Pulse duration
@@ -49,27 +49,6 @@ for i in range(0, 1000):
     # Save sigObj to binary file
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
-
-    """
-    snrVector = np.linspace(0, -70, 71, dtype=int)
-    for SNR in snrVector:
-        sigObj.SNR = SNR
-
-        package = np.random.randint(0, 1, 32)
-        modSig = NLFM.modulate( package )
-        modSig = util.wgnSnr( modSig, SNR)
-        sigObj.timeSeries = modSig
-
-        # Write to binary file
-        path = "../wavefrorms/"
-        filename = str(i)+"_"+ str(SNR)
-        destination = path + filename + ".pkl"
-
-
-        # Save sigObj to binary file
-        with open(destination,'wb') as f:
-            pickle.dump(sigObj, f)
-    """
 
     
 

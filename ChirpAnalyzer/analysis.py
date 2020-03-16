@@ -45,10 +45,18 @@ nIterations = file_count
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T=np.float(6e-3)  # Pulse duration. #! Must be the same as the signals
-EbN0Vector = np.linspace(0, -30, 31)
+
+# Generate logarithmic spread of Eb/N0 values.
+EbN0Start = -0.1
+EbN0End = -20
+#EbN0Vector = -np.subtract(-EbN0End, np.logspace(np.log10(-EbN0Start), np.log10(-EbN0End), num=31, endpoint=True, base=10.0))
+EbN0Vector = np.linspace(EbN0End, EbN0Start, 41)
+
+#EbN0Vector = np.linspace(0, -30, 31)
 snrVector = EbN0toSNRdB(EbN0Vector, 2, Fs, 1/T)
 
 fCenterEstimate = np.zeros((nIterations, len(snrVector)), dtype=np.float64)
+fCenterEstimate2 = np.zeros((nIterations, len(snrVector)), dtype=np.float64)
 R_symbEstimate = np.zeros((nIterations, len(snrVector)))
 
 print("np.shape(fCenterEstimate)", np.shape(fCenterEstimate))
@@ -78,41 +86,38 @@ for i in range(0, nIterations):
 
         SCD, f, alpha = radar.FAM(package, Fs = sigObj.Fs, plot=False, method='conj', scale='linear')
         fCenter, R_symb = radar.cyclicEstimator( SCD, f, alpha )
+        fCenter2 =radar.carierFrequencyEstimator( package, sigObj.Fs, method='mle' )
 
-        fCenterEstimate = np.abs(sigObj.fCenter-fCenter)
+        fCenterEstimate = np.abs(sigObj.fCenter-fCenter)/sigObj.fCenter
+        fCenterEstimate2 = np.abs(sigObj.fCenter-fCenter2)/sigObj.fCenter
         R_symbEstimate = np.abs(targetR_symb-R_symb)
-        return fCenterEstimate, R_symbEstimate
+        return fCenterEstimate, fCenterEstimate2, R_symbEstimate
 
     # = joblib.Parallel(n_jobs=8, verbose=20)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
     estimates = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
     estimateMat = np.asarray(estimates)
     fCenterEstimate[i,:] = estimateMat[:, 0]
-    R_symbEstimate[i,:] = estimateMat[:, 1]
+    fCenterEstimate2[i,:] = estimateMat[:, 1]
+    R_symbEstimate[i,:] = estimateMat[:, 2]
 
-"""
-    for j, SNR in enumerate(snrVector):
-        package = util.wgnSnr( modSig, SNR)
 
-        SCD, f, alpha = radar.FAM(package, Fs = sigObj.Fs, plot=False, method='conj', scale='linear')
-        fCenter, R_symb = radar.cyclicEstimator( SCD, f, alpha )
-
-        fCenterEstimate[i,j] = np.abs(sigObj.fCenter-fCenter)
-        R_symbEstimate[i,j] = np.abs(targetR_symb-R_symb)
-"""
-
+# Calculate Root Mean Square Normalized Error
+fCenterEstimateVector = np.mean(fCenterEstimate, 0)
+fCenterEstimateVector2 = np.mean(fCenterEstimate2, 0)
 
 # Calculate MSE
-fCenterEstimateVector = np.mean(np.power(fCenterEstimate, 2), 0)
 R_symbEstimateVector = np.mean(np.power(R_symbEstimate, 2), 0)
 
 imagePath = "../figures/estimation/"
 
 plt.figure()
-plt.plot(EbN0Vector, fCenterEstimateVector)
+plt.semilogy(EbN0Vector, fCenterEstimateVector, label='Cyclic Etimator', marker="+")
+plt.semilogy(EbN0Vector, fCenterEstimateVector2, label='DFT ML Estimator', marker=".")
 plt.grid()
-plt.title("Center Frequency Estimation Error")
-plt.xlabel('E_b/N_0 [dB]')
-plt.ylabel('MSE')
+plt.title("Mean Absolute Normalized Error")
+plt.xlabel('$E_b/N_0$ [dB]')
+plt.ylabel('Mean Absolute Normalized Error')
+plt.legend()
 plt.tight_layout()
 
 fileName = 'Center_Frequency_Estimation_Error' + str(nIterations)
@@ -120,10 +125,10 @@ plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
 plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 plt.figure()
-plt.plot(EbN0Vector, R_symbEstimateVector)
+plt.semilogy(EbN0Vector, R_symbEstimateVector)
 plt.grid()
 plt.title("Symbol Rate Estimation Error")
-plt.xlabel('E_b/N_0 [dB]')
+plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('MSE')
 plt.tight_layout()
 
