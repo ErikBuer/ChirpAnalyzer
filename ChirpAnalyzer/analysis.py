@@ -40,7 +40,7 @@ def EbN0toSNRdB(EbN0, M, Fs, Fsymb):
 directory = '../../waveforms/'
 path, dirs, files = os.walk(directory).__next__()
 
-file_count = len(files)
+file_count = 10#len(files)
 nIterations = file_count
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
@@ -90,10 +90,9 @@ for i in range(0, nIterations):
 
         fCenterEstimate = np.abs(sigObj.fCenter-fCenter)/sigObj.fCenter
         fCenterEstimate2 = np.abs(sigObj.fCenter-fCenter2)/sigObj.fCenter
-        R_symbEstimate = np.abs(targetR_symb-R_symb)
+        R_symbEstimate = np.abs(targetR_symb-R_symb)/targetR_symb
         return fCenterEstimate, fCenterEstimate2, R_symbEstimate
 
-    # = joblib.Parallel(n_jobs=8, verbose=20)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
     estimates = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
     estimateMat = np.asarray(estimates)
     fCenterEstimate[i,:] = estimateMat[:, 0]
@@ -101,20 +100,32 @@ for i in range(0, nIterations):
     R_symbEstimate[i,:] = estimateMat[:, 2]
 
 
-# Calculate Root Mean Square Normalized Error
+estimateVector = [snrVector, EbN0Vector, fCenterEstimate, fCenterEstimate2, R_symbEstimate]
+
+# Write to binary file
+imagePath = "../figures/estimation/"
+filename = 'estimates'
+destination = imagePath + filename + str(file_count) + '.pkl'
+
+# Save sigObj to binary file
+with open(destination,'wb') as f:
+    pickle.dump(estimateVector, f)
+
+
+# Calculate Mean Absolute Normalized Error
 fCenterEstimateVector = np.mean(fCenterEstimate, 0)
 fCenterEstimateVector2 = np.mean(fCenterEstimate2, 0)
 
-# Calculate MSE
-R_symbEstimateVector = np.mean(np.power(R_symbEstimate, 2), 0)
+# Calculate Mean Absolute Normalized Error
+R_symbEstimateVector = np.mean(R_symbEstimate, 0)
 
-imagePath = "../figures/estimation/"
+
 
 plt.figure()
 plt.semilogy(EbN0Vector, fCenterEstimateVector, label='Cyclic Etimator', marker="+")
 plt.semilogy(EbN0Vector, fCenterEstimateVector2, label='DFT ML Estimator', marker=".")
 plt.grid()
-plt.title("Mean Absolute Normalized Error")
+#plt.title("Center Frequency Estimation Error")
 plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('Mean Absolute Normalized Error')
 plt.legend()
@@ -127,7 +138,7 @@ plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 plt.figure()
 plt.semilogy(EbN0Vector, R_symbEstimateVector)
 plt.grid()
-plt.title("Symbol Rate Estimation Error")
+#plt.title("Symbol Rate Estimation Error")
 plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('MSE')
 plt.tight_layout()

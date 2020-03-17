@@ -1,18 +1,23 @@
 from scipy.signal import chirp, sweep_poly, spectrogram, welch
 from scipy.special import factorial
-from waveform import *  # waveform object
 import scipy.signal as signal
-import matplotlib.pyplot as plt
 import numpy as np
+import random
+import matplotlib.pyplot as plt
+
+
 import rftool.radar as radar
 import rftool.utility as util
+from waveform import *  # waveform object
+
+import joblib   # Parallelizations
 import pickle
-import random
+
 
 Fs=np.intc(802e3) # receiver sample rate
 
-for i in range(1000, 5000):
-    print("Iteration", i)
+def generator(Fs, i):
+    print("Signal iteration", i)
 
     T=np.float(6e-3)  # Pulse duration
     # Time domain window for NLFM generation
@@ -50,6 +55,7 @@ for i in range(1000, 5000):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
+joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(3863, 10000))
     
 
 """
