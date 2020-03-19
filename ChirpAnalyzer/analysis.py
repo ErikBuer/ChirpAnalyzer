@@ -35,22 +35,24 @@ def EbN0toSNRdB(EbN0, M, Fs, Fsymb):
     """
     return util.pow2db(np.multiply(util.db2pow(EbN0), Fsymb*np.log2(M)/Fs))
 
+# Pathes for file storages
+imagePath = "../figures/estimation_50khz_bw/"
 
 # find number of files in folder
-directory = '../../waveforms/'
+directory = '../../waveforms_50khz_bw/'
 path, dirs, files = os.walk(directory).__next__()
 
-file_count = 10#len(files)
+file_count = 200#len(files)
 nIterations = file_count
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T=np.float(6e-3)  # Pulse duration. #! Must be the same as the signals
 
 # Generate logarithmic spread of Eb/N0 values.
-EbN0Start = -0.1
+EbN0Start = 20
 EbN0End = -20
 #EbN0Vector = -np.subtract(-EbN0End, np.logspace(np.log10(-EbN0Start), np.log10(-EbN0End), num=31, endpoint=True, base=10.0))
-EbN0Vector = np.linspace(EbN0End, EbN0Start, 41)
+EbN0Vector = np.linspace(EbN0End, EbN0Start, 51)
 
 #EbN0Vector = np.linspace(0, -30, 31)
 snrVector = EbN0toSNRdB(EbN0Vector, 2, Fs, 1/T)
@@ -58,8 +60,6 @@ snrVector = EbN0toSNRdB(EbN0Vector, 2, Fs, 1/T)
 fCenterEstimate = np.zeros((nIterations, len(snrVector)), dtype=np.float64)
 fCenterEstimate2 = np.zeros((nIterations, len(snrVector)), dtype=np.float64)
 R_symbEstimate = np.zeros((nIterations, len(snrVector)))
-
-print("np.shape(fCenterEstimate)", np.shape(fCenterEstimate))
 
 for i in range(0, nIterations):
     print("Iteration", i+1, "of", nIterations)
@@ -80,30 +80,49 @@ for i in range(0, nIterations):
     modSig = NLFM.modulate( package )
     targetR_symb = 1/NLFM.T
 
+    # Calculate CRLB for the chirp in the SNR range
+    if(i == 0):
+        # Generate pulse
+        p_n = NLFM.genFromPoly()
+        # Number of pulses
+        K = len(package)
+        # Calculate discrete pulse times l_k
+        l_k = np.linspace(0, K-1, K)*len(p_n)
+        # Calculate Noise power N
+        N =  util.db2pow(util.powerdB(p_n) - snrVector)
+        CRLBOmega = radar.pulseCarrierCRLB(p_n, K, l_k, N)
+        CRLBHertz = np.power(np.sqrt(CRLBOmega)/(2*np.pi), 2)
+
+        CRLBVector = [snrVector, CRLBHertz]
+
+        Destination = imagePath+'CRLB'+'.pkl'
+        # Save sigObj to binary file
+        with open(Destination,'wb') as f:
+            pickle.dump(CRLBVector, f)
+
 
     def estimator(modSig, SNR, sigObj):
         package = util.wgnSnr( modSig, SNR)
 
         SCD, f, alpha = radar.FAM(package, Fs = sigObj.Fs, plot=False, method='conj', scale='linear')
         fCenter, R_symb = radar.cyclicEstimator( SCD, f, alpha )
-        fCenter2 =radar.carierFrequencyEstimator( package, sigObj.Fs, method='mle' )
+        fCenter2 =radar.carierFrequencyEstimator( package, sigObj.Fs, method='mle' , nfft=2048 )    # 459
 
-        fCenterEstimate = np.abs(sigObj.fCenter-fCenter)/sigObj.fCenter
-        fCenterEstimate2 = np.abs(sigObj.fCenter-fCenter2)/sigObj.fCenter
-        R_symbEstimate = np.abs(targetR_symb-R_symb)/targetR_symb
+        fCenterEstimate = np.abs(sigObj.fCenter-fCenter)
+        fCenterEstimate2 = np.abs(sigObj.fCenter-fCenter2)
+        R_symbEstimate = np.abs(targetR_symb-R_symb)
         return fCenterEstimate, fCenterEstimate2, R_symbEstimate
 
-    estimates = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
+    estimates = joblib.Parallel(n_jobs=6, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
     estimateMat = np.asarray(estimates)
     fCenterEstimate[i,:] = estimateMat[:, 0]
     fCenterEstimate2[i,:] = estimateMat[:, 1]
     R_symbEstimate[i,:] = estimateMat[:, 2]
 
 
-estimateVector = [snrVector, EbN0Vector, fCenterEstimate, fCenterEstimate2, R_symbEstimate]
+estimateVector = [snrVector, EbN0Vector, nIterations, fCenterEstimate, fCenterEstimate2, R_symbEstimate]
 
 # Write to binary file
-imagePath = "../figures/estimation/"
 filename = 'estimates'
 destination = imagePath + filename + str(file_count) + '.pkl'
 
@@ -111,40 +130,4 @@ destination = imagePath + filename + str(file_count) + '.pkl'
 with open(destination,'wb') as f:
     pickle.dump(estimateVector, f)
 
-
-# Calculate Mean Absolute Normalized Error
-fCenterEstimateVector = np.mean(fCenterEstimate, 0)
-fCenterEstimateVector2 = np.mean(fCenterEstimate2, 0)
-
-# Calculate Mean Absolute Normalized Error
-R_symbEstimateVector = np.mean(R_symbEstimate, 0)
-
-
-
-plt.figure()
-plt.semilogy(EbN0Vector, fCenterEstimateVector, label='Cyclic Etimator', marker="+")
-plt.semilogy(EbN0Vector, fCenterEstimateVector2, label='DFT ML Estimator', marker=".")
-plt.grid()
-#plt.title("Center Frequency Estimation Error")
-plt.xlabel('$E_b/N_0$ [dB]')
-plt.ylabel('Mean Absolute Normalized Error')
-plt.legend()
-plt.tight_layout()
-
-fileName = 'Center_Frequency_Estimation_Error' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
-
-plt.figure()
-plt.semilogy(EbN0Vector, R_symbEstimateVector)
-plt.grid()
-#plt.title("Symbol Rate Estimation Error")
-plt.xlabel('$E_b/N_0$ [dB]')
-plt.ylabel('MSE')
-plt.tight_layout()
-
-fileName = 'Symbol_Rate_Estimation_Error' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
-
-plt.show()
+# For post processing (generation of figures, see Post_Analysis.py)

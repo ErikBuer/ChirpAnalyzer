@@ -34,20 +34,34 @@ def generator(Fs, i):
     #window_t = signal.gaussian(np.intc(2048), 360)
     #window_t = signal.gaussian(np.intc(2048), 400)
 
+    """
+    # Random BW
     fStart = random.uniform(10e3,100e3)
     fStop = fStart+random.uniform(10e3,100e3)
+    fCenter = fStop-(fStop-fStart)/2
+
+    path = '../../waveforms/'
+    """
+
+    # Fixed BW
+    fStart = random.uniform(10e3,100e3)
+    fStop = fStart+50e3
     fCenter = fStop-(fStop-fStart)/2
 
     sigObj.fCenter = fCenter
     sigObj.fStart = fStart
     sigObj.fStop = fStop
 
+    path = '../../waveforms_50khz_bw/'
+   
+
+
     sigObj.polynomial = NLFM.getCoefficients( window_t, targetBw=fStop-fStart, centerFreq=fCenter, T=T)
     sigObj.omega_t = NLFM.targetOmega_t
 
 
     # Write to binary file
-    path = '../../waveforms/'
+
     filename = str(i)
     destination = path + filename + '.pkl'
 
@@ -55,15 +69,5 @@ def generator(Fs, i):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
-joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(3863, 10000))
+joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(10000, 20000))
     
-
-"""
-TODO Analyze
-- List of parameters to estimate on single chirp
-- Skriv i rapport hvordan HH-transform foregår.
-- Vurder Om kurvene skal karakteriseres fra sentrum, eller frs siden (i tid-frekvens).
-
-TODO Report
-- Which parameters in FAM decides the estimation resolution?
-"""
