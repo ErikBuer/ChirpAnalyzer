@@ -48,20 +48,20 @@ def generator(Fs, i):
     fStop = fStart+50e3
     fCenter = fStop-(fStop-fStart)/2
 
-    sigObj.fCenter = fCenter
+    #sigObj.fCenter = fCenter
     sigObj.fStart = fStart
     sigObj.fStop = fStop
 
     path = '../../waveforms_50khz_bw/'
    
-
-
     sigObj.polynomial = NLFM.getCoefficients( window_t, targetBw=fStop-fStart, centerFreq=fCenter, T=T)
     sigObj.omega_t = NLFM.targetOmega_t
 
-
+    # Center frequency is defined as the estimated center frequency in infinite SNR
+    sig_t = NLFM.genNumerical()
+    sigObj.fCenter = radar.carierFrequencyEstimator(sig_t, Fs, method='mle', nfft=len(sig_t))
+    
     # Write to binary file
-
     filename = str(i)
     destination = path + filename + '.pkl'
 
@@ -69,5 +69,5 @@ def generator(Fs, i):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
-joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(10000, 20000))
+joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(4999, 10000)) # Optimally four jobs
     

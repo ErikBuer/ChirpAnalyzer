@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib
 
+"""
 matplotlib.use("pgf")
 matplotlib.rcParams.update({
     "pgf.texsystem": "pdflatex",
@@ -18,6 +19,7 @@ matplotlib.rcParams.update({
     'text.usetex': True,
     'pgf.rcfonts': False,
 })
+"""
 
 import joblib   # Parallelizations
 import pickle
@@ -42,15 +44,15 @@ imagePath = "../figures/estimation_50khz_bw/"
 directory = '../../waveforms_50khz_bw/'
 path, dirs, files = os.walk(directory).__next__()
 
-file_count = 200#len(files)
+file_count = 550#len(files)
 nIterations = file_count
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T=np.float(6e-3)  # Pulse duration. #! Must be the same as the signals
 
 # Generate logarithmic spread of Eb/N0 values.
-EbN0Start = 20
-EbN0End = -20
+EbN0Start = 40
+EbN0End = 0
 #EbN0Vector = -np.subtract(-EbN0End, np.logspace(np.log10(-EbN0Start), np.log10(-EbN0End), num=31, endpoint=True, base=10.0))
 EbN0Vector = np.linspace(EbN0End, EbN0Start, 51)
 
@@ -76,14 +78,15 @@ for i in range(0, nIterations):
     NLFM.points = len(sigObj.omega_t)
     NLFM.c = sigObj.polynomial
 
-    package = np.random.randint(0, 1, 32)
+    package = np.random.randint(0, 2, 32)
     modSig = NLFM.modulate( package )
     targetR_symb = 1/NLFM.T
 
     # Calculate CRLB for the chirp in the SNR range
     if(i == 0):
         # Generate pulse
-        p_n = NLFM.genFromPoly()
+        #p_n = NLFM.genFromPoly()
+        p_n = NLFM.genNumerical()
         # Number of pulses
         K = len(package)
         # Calculate discrete pulse times l_k
@@ -91,7 +94,7 @@ for i in range(0, nIterations):
         # Calculate Noise power N
         N =  util.db2pow(util.powerdB(p_n) - snrVector)
         CRLBOmega = radar.pulseCarrierCRLB(p_n, K, l_k, N)
-        CRLBHertz = np.power(np.sqrt(CRLBOmega)/(2*np.pi), 2)
+        CRLBHertz = np.power(np.sqrt(CRLBOmega)*sigObj.Fs/(2*np.pi), 2)
 
         CRLBVector = [snrVector, CRLBHertz]
 
@@ -106,14 +109,14 @@ for i in range(0, nIterations):
 
         SCD, f, alpha = radar.FAM(package, Fs = sigObj.Fs, plot=False, method='conj', scale='linear')
         fCenter, R_symb = radar.cyclicEstimator( SCD, f, alpha )
-        fCenter2 =radar.carierFrequencyEstimator( package, sigObj.Fs, method='mle' , nfft=2048 )    # 459
+        fCenter2 =radar.carierFrequencyEstimator( package, sigObj.Fs, method='mle' , nfft=459 )
 
         fCenterEstimate = np.abs(sigObj.fCenter-fCenter)
         fCenterEstimate2 = np.abs(sigObj.fCenter-fCenter2)
         R_symbEstimate = np.abs(targetR_symb-R_symb)
         return fCenterEstimate, fCenterEstimate2, R_symbEstimate
 
-    estimates = joblib.Parallel(n_jobs=6, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector)
+    estimates = joblib.Parallel(n_jobs=6, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector) # Six jobs is optimal.
     estimateMat = np.asarray(estimates)
     fCenterEstimate[i,:] = estimateMat[:, 0]
     fCenterEstimate2[i,:] = estimateMat[:, 1]
