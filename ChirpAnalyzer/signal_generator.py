@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 
 import rftool.radar as radar
 import rftool.utility as util
-from waveform import *  # waveform object
+import rftool.estimation as estimate
+from utility import *  # waveform object
 
+import os
 import joblib   # Parallelizations
 import pickle
 
@@ -52,14 +54,14 @@ def generator(Fs, i):
     sigObj.fStart = fStart
     sigObj.fStop = fStop
 
-    path = '../../waveforms_50khz_bw/'
+    path = '../waveforms/'
    
     sigObj.polynomial = NLFM.getCoefficients( window_t, targetBw=fStop-fStart, centerFreq=fCenter, T=T)
     sigObj.omega_t = NLFM.targetOmega_t
 
     # Center frequency is defined as the estimated center frequency in infinite SNR
     sig_t = NLFM.genNumerical()
-    sigObj.fCenter = radar.carierFrequencyEstimator(sig_t, Fs, method='mle', nfft=len(sig_t))
+    sigObj.fCenter = estimate.carierFrequencyEstimator(sig_t, Fs, method='mle', nfft=len(sig_t))
     
     # Write to binary file
     filename = str(i)
@@ -69,5 +71,4 @@ def generator(Fs, i):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
-joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(4999, 10000)) # Optimally four jobs
-    
+joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(0, 100)) # Optimally four jobs
