@@ -5,6 +5,11 @@ import joblib   # Parallelizations
 import timeit
 import pickle
 
+import matplotlib.pyplot as plt
+from matplotlib import cm
+colorMap = cm.coolwarm
+import matplotlib
+
 class waveform:
     Fs = 0
     fCenter = 0
@@ -56,18 +61,20 @@ class estimator:
         self.kwargs = kwargs
 
 class analysis:
-    """
-    Class for managing estimation analysis result.
-
-    name is the name of the parameter which is estimated
-    lossFcn is the loss function 'MAE', 'MSE'
-    """
     path = '../waveforms/'
     def __init__( self, name, estimators, lossFcn):
+        """
+        Class for managing estimation analysis result.
+
+        name is the name of the parameter which is estimated
+        estimators are objects of the class estimator.
+        lossFcn is the loss function 'MAE', 'MSE'
+        """
         self.name = name
         self.estimators = estimators
         self.lossFcn = lossFcn
         self.axis = axis()
+        self.iterations = iterations
 
     def analyze(self, iterations, parameter):
         """
@@ -75,7 +82,9 @@ class analysis:
         iterations is the number of iterations per SNR scenario.
         parameter is the parameter to be estimated as a string. Must be the same as the parametername in the wavefrom object. 
         """
-        def estmate(i, SNRVector, estimator):
+        def estmate(i, SNRVector, estimator, packetSize=1):
+            print(estimator.name, 'iteration',i)
+
             time = np.empty_like(SNRVector)
             AE = np.empty_like(SNRVector)
 
@@ -89,13 +98,17 @@ class analysis:
             FM = radar.chirp(m_waveform.Fs)
             FM.targetOmega_t = m_waveform.omega_t
             FM.points = len(m_waveform.omega_t)
-            bitstream = np.random.randint(0, 2, 32)
-            modSig = FM.modulate( bitstream )
 
-            for m, SNR in SNRVector:
-                package = util.wgnSnr( modSig, SNR)
+            if 1<packetSize:
+                bitstream = np.random.randint(0, 2, packetSize)
+                sig_t = FM.modulate( bitstream )
+            else:
+                sig_t = FM.genNumerical()
+
+            for m, SNR in enumerate(SNRVector):
+                sig_noisy_t = util.wgnSnr( sig_t, SNR)
                 tic = timeit.default_timer()
-                estimate = estimator.funtion(**self.kwargs)
+                estimate = estimator.function(sig_noisy_t, **estimator.kwargs)
                 toc = timeit.default_timer()
                 
                 # Calculate Accumulated Absolute Error
@@ -105,4 +118,34 @@ class analysis:
             return AE, time 
 
         for estimator in self.estimators:
-            result = joblib.Parallel(n_jobs=1, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator) for i in range(0, iterations))
+            result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator) for i in range(0, iterations))
+            result = np.array(result)
+            error = result[:,0,:]
+            time = result[:,1,:]
+
+            estimator.errorMat = error
+            estimator.meanTime = np.mean(time)
+            estimator.iterations = iterations
+    
+    
+    def plotResults(self, pgf=False):
+        if pgf==True:
+            matplotlib.use("pgf")
+            matplotlib.rcParams.update({
+                "pgf.texsystem": "pdflatex",
+                'font.family': 'serif',
+                'text.usetex': True,
+                'pgf.rcfonts': False,
+            })
+
+        plt.figure()
+        for estimator in self.estimators:
+            print(estimator.name, ', mean execution time:', estimator.meanTime*1000, '[ms]')
+            estimator.meanError = np.mean(estimator.errorMat, axis=0)
+            plt.plot(self.axis.displayVector, estimator.meanError, label=estimator.name)
+        
+        plt.xlabel(self.axis.displayName)
+        plt.ylabel(self.lossFcn)
+        plt.legend()
+        plt.tight_layout()
+        
