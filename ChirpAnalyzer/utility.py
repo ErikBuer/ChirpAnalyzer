@@ -114,7 +114,7 @@ class analysis:
             for m, SNR in enumerate(SNRVector):
                 sig_noisy_t = util.wgnSnr( sig_t, SNR)
                 tic = timeit.default_timer()
-                estimate = estimator.function(sig_noisy_t, **estimator.kwargs)
+                estimate = estimator.function(sig_noisy_t, **estimator.kwargs, SNR=SNR)
                 toc = timeit.default_timer()
                 
                 # Calculate Accumulated Absolute Error
@@ -150,7 +150,7 @@ class analysis:
     
     def plotResults(self, pgf=False, **kwargs):
         plot = kwargs.get('plot', 'plot')
-
+        
         if pgf==True:
             matplotlib.use("pgf")
             matplotlib.rcParams.update({
@@ -160,26 +160,28 @@ class analysis:
                 'pgf.rcfonts': False,
             })
 
-        plt.figure()
-
+        #plt.figure()
+        fig, ax = plt.subplots()
         for index,estimator in enumerate(self.estimators):
-            # TODO add new linetype for each iteration
+            if estimator.name=='CRLB':
+                newParam = {'linestyle':'--'}
+                kwargs = {**kwargs, **newParam}
 
             print(estimator.name, ', mean execution time:', estimator.meanTime*1000, '[ms]')
             estimator.meanError = np.mean(estimator.errorMat, axis=0)
 
             if plot=='plot':
-                plt.plot(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+                ax.plot(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
             elif plot=='semilogy':
-                plt.semilogy(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+                ax.semilogy(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
             elif plot=='semilogx':
-                plt.semilogx(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+                ax.semilogx(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
             else:
-                plt.loglog(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+                ax.loglog(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
 
-        plt.xlabel(self.axis.displayName)
-        plt.ylabel(self.lossFcn)
-        plt.legend()
-        plt.grid()
+        ax.set_xlabel(self.axis.displayName)
+        ax.set_ylabel(self.lossFcn)
+        ax.set_legend()
+        ax.grid()
         plt.tight_layout()
         

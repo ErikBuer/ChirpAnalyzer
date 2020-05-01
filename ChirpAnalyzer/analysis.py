@@ -70,7 +70,8 @@ for i in range(0, nIterations):
     NLFM.points = len(sigObj.omega_t)
     NLFM.c = sigObj.polynomial
 
-    package = np.random.randint(0, 2, 32)
+    packetSize=32
+    package = np.random.randint(0, 2, packetSize)
     modSig = NLFM.modulate( package )
     targetR_symb = 1/NLFM.T
 
