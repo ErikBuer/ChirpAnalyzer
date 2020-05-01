@@ -11,6 +11,7 @@ import rftool.communications as comm
 from utility import *
 
 import matplotlib.pyplot as plt
+plt.style.use('masterThesis')
 from matplotlib import cm
 colorMap = cm.coolwarm
 import matplotlib

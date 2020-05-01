@@ -33,15 +33,15 @@ estimators.append(estimator('WVD MLE', estimate.instFreq, Fs=Fs, method='maxWVD'
 estimators.append(estimator('Piecewise Polynomial MLE', estimate.instFreq, Fs=Fs, method='polyMle', windowSize=42, order=2))
 
 # Create analysis object
-m_analysis = analysis('IF Estimation', estimators=estimators, lossFcn='MAE')
+m_analysis = analysis('IF_Estimation', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 80
 EbN0End = 0
 
-m_analysis.axis.displayName = '$E_b/N_0$'
+m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
 m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, 41)
-m_analysis.axis.name = 'SNR'
+m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='omega_t')
 

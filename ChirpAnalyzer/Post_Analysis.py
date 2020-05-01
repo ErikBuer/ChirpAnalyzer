@@ -10,21 +10,23 @@ import rftool.estimation as estimate
 from utility import *
 
 import matplotlib.pyplot as plt
+plt.style.use('masterThesis')
 from matplotlib import cm
-colorMap = cm.coolwarm
-import matplotlib
+import matplotlib as mpl
 
-matplotlib.use("pgf")
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+pgf = True
+if pgf==True:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
 import joblib   # Parallelizations
 import pickle
-from waveform import *
+from utility import *
 import os
 
 file_count = 100
@@ -63,8 +65,8 @@ R_symbEstimateVector = np.mean(R_symbEstimate, 0)
 R_symbEstimateVector2 = np.mean(R_symbEstimate2, 0)
 ################################################################################
 plt.figure()
-plt.semilogy(EbN0Vector, fCenterMse, label='Cyclic Etimator', marker="+")
-plt.semilogy(EbN0Vector, fCenter2Mse, label='DFT ML Estimator', marker=".")
+plt.semilogy(EbN0Vector, fCenterMse, label='Cyclic Etimator') #, marker="+")
+plt.semilogy(EbN0Vector, fCenter2Mse, label='DFT ML Estimator') #, marker=".")
 plt.semilogy(EbN0Vector, CRLB, '--', label='CRLB')
 
 plt.grid()
@@ -74,9 +76,10 @@ plt.ylabel('MSE')
 plt.legend()
 plt.tight_layout()
 
-fileName = 'Center_Frequency_Estimation_Error' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if pgf==True:
+    fileName = 'Center_Frequency_Estimation_Error' + str(nIterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 ################################################################################
 maxValue = np.max(fCenterEstimate)
@@ -89,7 +92,7 @@ for i, row in enumerate(np.transpose(fCenterEstimate)):
     histMatrix[:,i], bin_edges  = np.histogram(row, nBins, (minValue-deciRdange,maxValue+deciRdange))
 
 plt.figure()
-plt.pcolormesh(EbN0Vector, bin_edges, histMatrix, cmap = colorMap)
+plt.pcolormesh(EbN0Vector, bin_edges, histMatrix)
 plt.colorbar()
 #plt.boxplot(fCenterEstimate[:, 1::2], positions=EbN0Vector[1::2], showfliers=False)
 #plt.xticks(rotation=90)
@@ -99,9 +102,10 @@ plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('Absolute Error [Hz]')
 plt.tight_layout()
 
-fileName = 'Center_Frequency_Estimation_Error_Distribution' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if pgf==True:
+    fileName = 'Center_Frequency_Estimation_Error_Distribution' + str(nIterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 ################################################################################
 
@@ -115,9 +119,10 @@ plt.ylabel('Mean Absolute Error [Hz]')
 plt.legend()
 plt.tight_layout()
 
-fileName = 'Symbol_Rate_Estimation_Error' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if pgf==True:
+    fileName = 'Symbol_Rate_Estimation_Error' + str(nIterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 
 ################################################################################
@@ -131,7 +136,7 @@ for i, row in enumerate(np.transpose(R_symbEstimate)):
     histMatrix[:,i], bin_edges  = np.histogram(row, nBins, (minValue-deciRdange,maxValue+deciRdange))
 
 plt.figure()
-plt.pcolormesh(EbN0Vector, bin_edges, histMatrix, cmap = colorMap)
+plt.pcolormesh(EbN0Vector, bin_edges, histMatrix)
 plt.colorbar()
 #plt.boxplot(R_symbEstimate[:, 1::2], positions=EbN0Vector[1::2], showfliers=False)
 #plt.xticks(rotation=90)
@@ -141,9 +146,10 @@ plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('Absolute Error [Hz]')
 plt.tight_layout()
 
-fileName = 'Stmbol_Rate_Estimation_Error_Distribution' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if pgf==True:
+    fileName = 'Stmbol_Rate_Estimation_Error_Distribution' + str(nIterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 ################################################################################
 maxValue = np.max(R_symbEstimate2)
@@ -156,7 +162,7 @@ for i, row in enumerate(np.transpose(R_symbEstimate2)):
     histMatrix[:,i], bin_edges  = np.histogram(row, nBins, (minValue-deciRdange,maxValue+deciRdange))
 
 plt.figure()
-plt.pcolormesh(EbN0Vector, bin_edges, histMatrix, cmap = colorMap)
+plt.pcolormesh(EbN0Vector, bin_edges, histMatrix)
 plt.colorbar()
 #plt.boxplot(R_symbEstimate[:, 1::2], positions=EbN0Vector[1::2], showfliers=False)
 #plt.xticks(rotation=90)
@@ -166,6 +172,7 @@ plt.xlabel('$E_b/N_0$ [dB]')
 plt.ylabel('Absolute Error [Hz]')
 plt.tight_layout()
 
-fileName = 'Stmbol_Rate_Estimation_Full_BW_Error_Distribution' + str(nIterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if pgf==True:
+    fileName = 'Stmbol_Rate_Estimation_Full_BW_Error_Distribution' + str(nIterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')

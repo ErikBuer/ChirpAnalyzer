@@ -11,10 +11,10 @@ import rftool.estimation as estimate
 from utility import *
 
 import matplotlib.pyplot as plt
+plt.style.use('masterThesis')
 from matplotlib import cm
 import matplotlib
 
-"""
 matplotlib.use("pgf")
 matplotlib.rcParams.update({
     "pgf.texsystem": "pdflatex",
@@ -22,7 +22,7 @@ matplotlib.rcParams.update({
     'text.usetex': True,
     'pgf.rcfonts': False,
 })
-"""
+
 
 import joblib   # Parallelizations
 import pickle
@@ -32,7 +32,7 @@ import os
 imagePath = "../figures/estimation_50khz_bw/"
 
 # find number of files in folder
-directory = '../../waveforms_50khz_bw/'
+directory = '../waveforms/'
 path, dirs, files = os.walk(directory).__next__()
 
 file_count = 100#len(files)
@@ -111,7 +111,7 @@ for i in range(0, nIterations):
 
         return fCenterEstimate, fCenterEstimate2, R_symbEstimate, R_symbEstimate2
 
-    estimates = joblib.Parallel(n_jobs=6, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector) # Six jobs is optimal.
+    estimates = joblib.Parallel(n_jobs=1, verbose=0)(joblib.delayed(estimator)(modSig, SNR, sigObj) for SNR in snrVector) # Six jobs is optimal.
     estimateMat = np.asarray(estimates)
     fCenterEstimate[i,:] = estimateMat[:, 0]
     fCenterEstimate2[i,:] = estimateMat[:, 1]

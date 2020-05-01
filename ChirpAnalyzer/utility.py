@@ -6,8 +6,6 @@ import timeit
 import pickle
 
 import matplotlib.pyplot as plt
-from matplotlib import cm
-colorMap = cm.coolwarm
 import matplotlib
 
 class waveform:
@@ -34,6 +32,8 @@ class waveform:
             value = self.polynomial
         elif parameter == 'omega_t':
             value = self.omega_t
+        elif parameter == 'packet':
+            value = self.packet
         else:
             value = None
         return value
@@ -62,7 +62,7 @@ class estimator:
 
 class analysis:
     path = '../waveforms/'
-    def __init__( self, name, estimators, lossFcn):
+    def __init__( self, name, lossFcn, estimators):
         """
         Class for managing estimation analysis result.
 
@@ -74,14 +74,18 @@ class analysis:
         self.estimators = estimators
         self.lossFcn = lossFcn
         self.axis = axis()
-        self.iterations = iterations
+        
 
-    def analyze(self, iterations, parameter):
+    def analyze(self, iterations, parameter, **kwargs):
         """
         Iterate through the estimators and estimate.
         iterations is the number of iterations per SNR scenario.
         parameter is the parameter to be estimated as a string. Must be the same as the parametername in the wavefrom object. 
         """
+        packetSize = kwargs.get('packetSize', 1)
+        debug = kwargs.get('debug', False)
+        self.iterations = iterations
+
         def estmate(i, SNRVector, estimator, packetSize=1):
             print(estimator.name, 'iteration',i)
 
@@ -101,9 +105,11 @@ class analysis:
 
             if 1<packetSize:
                 bitstream = np.random.randint(0, 2, packetSize)
+                m_waveform.packet=bitstream
                 sig_t = FM.modulate( bitstream )
             else:
                 sig_t = FM.genNumerical()
+                m_waveform.packet=1
 
             for m, SNR in enumerate(SNRVector):
                 sig_noisy_t = util.wgnSnr( sig_t, SNR)
@@ -112,13 +118,27 @@ class analysis:
                 toc = timeit.default_timer()
                 
                 # Calculate Accumulated Absolute Error
-                AE[m] = np.sum(np.abs(np.subtract(m_waveform.returnValue(parameter), estimate)))
+                
+                # For packets, the inverse of the bitstream is accepted.
+                if parameter=='packet':
+                    AE_temp = []
+                    AE_temp.append(np.sum(np.abs(np.subtract(m_waveform.returnValue(parameter), estimate))))
+                    AE_temp.append(np.sum(np.abs(np.subtract(m_waveform.returnValue(parameter), abs(1-estimate)))))
+                    AE[m] = np.min(AE_temp)
+                    # If the error is greater than 50% then (for binary symbols) the packet is broken.
+                    if len(estimate)/2<AE[m]:
+                         AE[m]=len(estimate)/2
+                else:
+                    AE[m] = np.sum(np.abs(np.subtract(m_waveform.returnValue(parameter), estimate)))
                 # calculate execution time
                 time[m] = toc - tic
             return AE, time 
 
         for estimator in self.estimators:
-            result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator) for i in range(0, iterations))
+            if debug == True:
+                result = joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+            else:
+                result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
             result = np.array(result)
             error = result[:,0,:]
             time = result[:,1,:]
@@ -128,7 +148,9 @@ class analysis:
             estimator.iterations = iterations
     
     
-    def plotResults(self, pgf=False):
+    def plotResults(self, pgf=False, **kwargs):
+        plot = kwargs.get('plot', 'plot')
+
         if pgf==True:
             matplotlib.use("pgf")
             matplotlib.rcParams.update({
@@ -139,13 +161,25 @@ class analysis:
             })
 
         plt.figure()
-        for estimator in self.estimators:
+
+        for index,estimator in enumerate(self.estimators):
+            # TODO add new linetype for each iteration
+
             print(estimator.name, ', mean execution time:', estimator.meanTime*1000, '[ms]')
             estimator.meanError = np.mean(estimator.errorMat, axis=0)
-            plt.plot(self.axis.displayVector, estimator.meanError, label=estimator.name)
-        
+
+            if plot=='plot':
+                plt.plot(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+            elif plot=='semilogy':
+                plt.semilogy(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+            elif plot=='semilogx':
+                plt.semilogx(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+            else:
+                plt.loglog(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+
         plt.xlabel(self.axis.displayName)
         plt.ylabel(self.lossFcn)
         plt.legend()
+        plt.grid()
         plt.tight_layout()
         
