@@ -18,10 +18,20 @@ import matplotlib
 import pickle
 #import os
 
+Debug = False
+
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 10
-packetSize=32
+nIterations = 99
+packetSize = 32
+
+# Load alpha window function a-priori
+path = '../jobs/'
+filename = 'SCD_GMM'
+destination = path + filename + '.pkl'
+with open(destination,'rb') as f:
+    alphaWindow = pickle.load(f)
+
 
 # Wrapper for estimation function 
 def cyclicFreqEstimator(sig, Fs, **kwargs):
@@ -45,9 +55,10 @@ def CRLB(sig, Fs, packetSize, SNR):
 
 # Configure estimators
 estimators = []
-estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
+#estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
 estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
-estimators.append(estimator('CRLB', CRLB, packetSize=packetSize, Fs=Fs))
+estimators.append(estimator('Cyclic MLE A-Priori Symbol-Rate', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
+#! estimators.append(estimator('CRLB', CRLB, packetSize=packetSize, Fs=Fs))
 
 # Create analysis object
 m_analysis = analysis('Center_Frequency_Estimation', estimators=estimators, lossFcn='MAE')
@@ -60,7 +71,7 @@ m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
 m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, 41)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
-m_analysis.analyze(iterations=nIterations, parameter='fCenter', packetSize=packetSize, debug=False)
+m_analysis.analyze(iterations=nIterations, parameter='fCenter', packetSize=packetSize, debug=Debug)
 
 
 """# Write to binary file
@@ -76,7 +87,6 @@ with open(destination,'wb') as f:
 path = '../jobs/'
 filename = 'centerFrequencyJob'
 destination = path + filename + str(iterations) + '.pkl'
-# Save job to binary file
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)"""
 
@@ -86,7 +96,7 @@ plt.style.use('masterThesis')
 import matplotlib
 
 iterations = nIterations
-m_analysis.plotResults(pgf=True)
+m_analysis.plotResults(pgf=not Debug, scale='semilogy')
 
 imagePath = '../figures/'
 fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)

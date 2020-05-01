@@ -149,7 +149,7 @@ class analysis:
     
     
     def plotResults(self, pgf=False, **kwargs):
-        plot = kwargs.get('plot', 'plot')
+        scale = kwargs.pop('scale', 'linear')
         
         if pgf==True:
             matplotlib.use("pgf")
@@ -160,7 +160,6 @@ class analysis:
                 'pgf.rcfonts': False,
             })
 
-        #plt.figure()
         fig, ax = plt.subplots()
         for index,estimator in enumerate(self.estimators):
             if estimator.name=='CRLB':
@@ -170,18 +169,19 @@ class analysis:
             print(estimator.name, ', mean execution time:', estimator.meanTime*1000, '[ms]')
             estimator.meanError = np.mean(estimator.errorMat, axis=0)
 
-            if plot=='plot':
+            if scale=='linear':
                 ax.plot(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
-            elif plot=='semilogy':
+                ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+            elif scale=='semilogy':
                 ax.semilogy(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
-            elif plot=='semilogx':
+            elif scale=='semilogx':
                 ax.semilogx(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
             else:
                 ax.loglog(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
 
         ax.set_xlabel(self.axis.displayName)
         ax.set_ylabel(self.lossFcn)
-        ax.set_legend()
+        ax.legend()
         ax.grid()
         plt.tight_layout()
         
