@@ -30,17 +30,17 @@ estimators.append(estimator('Barnes Two-Point FIR', estimate.instFreq, Fs=Fs, me
 estimators.append(estimator('Derivative', estimate.instFreq, Fs=Fs, method='derivative'))
 estimators.append(estimator('WVD MLE', estimate.instFreq, Fs=Fs, method='maxWVD'))
 #estimators.append(estimator('Hilbert Spectrum MLE', estimate.instFreq, Fs=Fs, method='maxDHHT'))
-estimators.append(estimator('Piecewise Polynomial MLE', estimate.instFreq, Fs=Fs, method='polyMle', windowSize=42, order=2))
+estimators.append(estimator('Piecewise Polynomial MLE', estimate.instFreq, Fs=Fs, method='polyMle', windowSize=50, order=2))
 
 # Create analysis object
 m_analysis = analysis('IF_Estimation', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 80
-EbN0End = 0
+EbN0End = 20
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, 41)
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, 50)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='omega_t')

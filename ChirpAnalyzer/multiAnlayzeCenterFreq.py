@@ -10,10 +10,10 @@ import rftool.estimation as estimate
 import rftool.communications as comm
 from utility import *
 
-"""
+
 import matplotlib.pyplot as plt
-import matplotlib
-"""
+import matplotlib as mpl
+
 
 import pickle
 #import os
@@ -22,7 +22,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 99
+nIterations = 1
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -40,9 +40,9 @@ def cyclicFreqEstimator(sig, Fs, **kwargs):
     return fCenter
 
 # Wrapper for CRLB calculator
-def CRLB(sig, Fs, packetSize, SNR):
+def CRLB(sig, Fs, packetSize, SNR, cleanSig, **kwargs):
     symblen = np.intc(len(sig)/packetSize)
-    p_n = sig
+    p_n =  cleanSig[0:symblen] # the energy of one pulse is the same as sum(abs(symbol)). The symbols has a magnitude of one
     # Number of pulses
     K = packetSize
     # Calculate discrete pulse times l_k
@@ -50,29 +50,30 @@ def CRLB(sig, Fs, packetSize, SNR):
     # Calculate Noise power N
     N =  util.db2pow(util.powerdB(p_n) - SNR)
     CRLBOmega = estimate.pulseCarrierCRLB(p_n, K, l_k, N)
-    CRLB = np.sqrt(CRLBOmega)*Fs/(2*np.pi)
-    return CRLB
+    AbsoluteErrorHertz = np.sqrt(CRLBOmega)*Fs/(2*np.pi)
+    #CRLBHertz = np.power(np.sqrt(CRLBOmega)*Fs/(2*np.pi), 2)
+    return AbsoluteErrorHertz
 
 # Configure estimators
 estimators = []
-#estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
-estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
-estimators.append(estimator('Cyclic MLE A-Priori Symbol-Rate', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
-#! estimators.append(estimator('CRLB', CRLB, packetSize=packetSize, Fs=Fs))
+estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
+#estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
+estimators.append(estimator('Cyclic MLE A-Priori $T_s$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
+estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='rectangle', fWindowWidthHertz=50e3))
+estimators.append(estimator('$\sqrt{CRLB}$ [Hz]', CRLB, packetSize=packetSize, Fs=Fs))
 
 # Create analysis object
 m_analysis = analysis('Center_Frequency_Estimation', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 40
-EbN0End = 0
+EbN0End = 10
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, 41)
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='fCenter', packetSize=packetSize, debug=Debug)
-
 
 """# Write to binary file
 path = '../jobs/'
@@ -96,9 +97,25 @@ plt.style.use('masterThesis')
 import matplotlib
 
 iterations = nIterations
-m_analysis.plotResults(pgf=not Debug, scale='semilogy')
+fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MAE [Hz]')
+ax.legend(loc='lower right')
+#ax.set_ymargin = 0.1
+fig.set_figheight(2.5)
+plt.tight_layout()
+imagePath = '../figures/centerFreqEst/'
+if Debug == False:
+    fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
-imagePath = '../figures/'
-fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+ax.lines.pop(-1)
+#ax.set_ymargin = 0.1
+ax.legend(loc='upper right')
+ax.set_ylim(100,100000)
+plt.tight_layout()
+if Debug == False:
+    fileName = m_analysis.name +'_noCRLB_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+
+plt.show()

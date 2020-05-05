@@ -6,7 +6,7 @@ import timeit
 import pickle
 
 import matplotlib.pyplot as plt
-import matplotlib
+import matplotlib as mpl
 
 class waveform:
     Fs = 0
@@ -114,11 +114,11 @@ class analysis:
             for m, SNR in enumerate(SNRVector):
                 sig_noisy_t = util.wgnSnr( sig_t, SNR)
                 tic = timeit.default_timer()
-                estimate = estimator.function(sig_noisy_t, **estimator.kwargs, SNR=SNR)
+                # cleanSig and SNR is passed to enable CRLB calculation 
+                estimate = estimator.function(sig_noisy_t, **estimator.kwargs, SNR=SNR, cleanSig=sig_t)
                 toc = timeit.default_timer()
                 
                 # Calculate Accumulated Absolute Error
-                
                 # For packets, the inverse of the bitstream is accepted.
                 if parameter=='packet':
                     AE_temp = []
@@ -128,6 +128,8 @@ class analysis:
                     # If the error is greater than 50% then (for binary symbols) the packet is broken.
                     if len(estimate)/2<AE[m]:
                          AE[m]=len(estimate)/2
+                elif 'CRLB' in estimator.name:
+                    AE[m] = estimate
                 else:
                     AE[m] = np.sum(np.abs(np.subtract(m_waveform.returnValue(parameter), estimate)))
                 # calculate execution time
@@ -135,25 +137,32 @@ class analysis:
             return AE, time 
 
         for estimator in self.estimators:
-            if debug == True:
-                result = joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+            # CRLB calculation, only run once for each SNR
+            if 'CRLB' in estimator.name:
+                estimator.errorMat = estmate(i=0, SNRVector=self.axis.vector, estimator=estimator, packetSize=packetSize)
+                estimator.meanTime = np.nan
+                estimator.iterations = np.nan
             else:
-                result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
-            result = np.array(result)
-            error = result[:,0,:]
-            time = result[:,1,:]
+                if debug == True:
+                    result = joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+                else:
+                    result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+                result = np.array(result)
+                error = result[:,0,:]
+                time = result[:,1,:]
 
-            estimator.errorMat = error
-            estimator.meanTime = np.mean(time)
-            estimator.iterations = iterations
+                estimator.errorMat = error
+                estimator.meanTime = np.mean(time)
+                estimator.iterations = iterations
     
     
     def plotResults(self, pgf=False, **kwargs):
         scale = kwargs.pop('scale', 'linear')
-        
+        plotYlabel = kwargs.pop('plotYlabel', self.lossFcn)
+
         if pgf==True:
-            matplotlib.use("pgf")
-            matplotlib.rcParams.update({
+            mpl.use("pgf")
+            mpl.rcParams.update({
                 "pgf.texsystem": "pdflatex",
                 'font.family': 'serif',
                 'text.usetex': True,
@@ -162,7 +171,7 @@ class analysis:
 
         fig, ax = plt.subplots()
         for index,estimator in enumerate(self.estimators):
-            if estimator.name=='CRLB':
+            if 'CRLB' in estimator.name:    # If the name contains the string 'CRLB'
                 newParam = {'linestyle':'--'}
                 kwargs = {**kwargs, **newParam}
 
@@ -176,12 +185,18 @@ class analysis:
                 ax.semilogy(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
             elif scale=='semilogx':
                 ax.semilogx(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
+            elif scale=='dBmag':
+                ax.plot(self.axis.displayVector, util.mag2db(estimator.meanError), label=estimator.name, **kwargs)
+                ax.ticklabel_format(useMathText=True, scilimits=(0,3))
             else:
                 ax.loglog(self.axis.displayVector, estimator.meanError, label=estimator.name, **kwargs)
 
         ax.set_xlabel(self.axis.displayName)
-        ax.set_ylabel(self.lossFcn)
+        ax.set_ylabel(plotYlabel)
         ax.legend()
+        # For the minor ticks, use no labels; default NullFormatter.
+        ax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(1))
+        ax.grid(which='minor', linestyle='-')
         ax.grid()
         plt.tight_layout()
-        
+        return fig, ax

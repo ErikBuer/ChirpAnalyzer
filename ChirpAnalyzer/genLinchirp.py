@@ -11,13 +11,30 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-mpl.use("pgf")
-mpl.rcParams.update({
-    "pgf.texsystem": "lualatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+# Print ndarray as Latex matrix
+def bmatrix(a):
+    """Returns a LaTeX bmatrix
+
+    :a: numpy array
+    :returns: LaTeX bmatrix as a string
+    """
+    if len(a.shape) > 2:
+        raise ValueError('bmatrix can at most display two dimensions')
+    lines = str(a).replace('[', '').replace(']', '').splitlines()
+    rv = [r'\begin{bmatrix}']
+    rv += ['  ' + ' & '.join(l.split()) + r'\\' for l in lines]
+    rv +=  [r'\end{bmatrix}']
+    return '\n'.join(rv)
+
+debug=False
+if debug==False:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "lualatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
 import rftool.LFM as LFM
 import rftool.utility as util
@@ -28,19 +45,24 @@ imagePath = '../figures/linFM/'
 FM = LFM.chirp(30e3,5e-3, 1, 5e3, 4, direction='up')
 FM.plotSymbols()
 
-fileName = 'symbolIf'
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if debug==False:
+    fileName = 'symbolIf'
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 FM.plotAutocorr()
-fileName = 'symbolRxx'
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if debug==False:
+    fileName = 'symbolRxx'
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
-FM.plotDotProd()
-fileName = 'symbolDotProd'
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+corrmatDb = FM.plotDotProd()
+if debug==False:
+    fileName = 'symbolDotProd'
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+print(corrmatDb)
+print(bmatrix(corrmatDb))
 
 # LoRa-like synchronization sequence
 fig = plt.figure()
@@ -77,8 +99,9 @@ plt.legend(loc='center left')
 plt.grid(axis='x')
 plt.tight_layout()
 
-fileName = 'LoRaSyncWord'
-plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
-plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+if debug==False:
+    fileName = 'LoRaSyncWord'
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 
 plt.show()

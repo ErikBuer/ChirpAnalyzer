@@ -105,14 +105,17 @@ def func(x, *params):
 
 # gaussian[\mu, \phi, \sigma]
 Fsymb = 1/T
-width = 2.5
-numbOfGausses = 5
+width = 3
+numbOfGausses = 6 
 #gaussian1 = np.array([1*Fsymb,1,1*width])
 Gaussian = np.array([])
 for i in range(-numbOfGausses,numbOfGausses+1):
     if i!=0:
         GmVecIt = np.array([i*Fsymb,np.abs(1/i),i*width])
         Gaussian = np.append(Gaussian, GmVecIt)
+    """else:
+        GmVecIt = np.array([i*Fsymb,np.abs(1/2),2*width])
+        Gaussian = np.append(Gaussian, GmVecIt)"""
 
 fit = func(alpha, *Gaussian)
 

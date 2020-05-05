@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-pgf=False
+pgf=True
 imagePath = '../figures/cycloDemo/'
 
 if pgf==True:
@@ -72,6 +72,7 @@ ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 #plt.title("Spectral Correlation Density")
 ax.set_xlabel("alpha [Hz]")
 ax.set_ylabel("f [Hz]")
+
 fig.colorbar(im)
 plt.tight_layout()
 
