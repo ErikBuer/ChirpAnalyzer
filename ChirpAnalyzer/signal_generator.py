@@ -28,7 +28,8 @@ def generator(Fs, i):
 
     sigObj = waveform()
     sigObj.Fs = Fs
-
+    sigObj.T = T
+    sigObj.symbolRate = 1/T
 
     # Synthesize the target autocorrelation function
     #window_t = signal.chebwin(np.intc(2048), 60)
@@ -71,4 +72,4 @@ def generator(Fs, i):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
-joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(500, 1000)) # Optimally four jobs
+joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(1, 100)) # Optimally four jobs

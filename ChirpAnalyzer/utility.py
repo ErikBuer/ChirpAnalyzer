@@ -15,6 +15,8 @@ class waveform:
     fStop = 0
     polynomial = np.array([0])
     omega_t = np.array([0])
+    T = 0
+    symbolRate = 0
 
     def returnValue(self, parameter):
         """
@@ -34,6 +36,8 @@ class waveform:
             value = self.omega_t
         elif parameter == 'packet':
             value = self.packet
+        elif parameter == 'symbolRate':
+            value = self.symbolRate
         else:
             value = None
         return value
@@ -196,7 +200,7 @@ class analysis:
         ax.legend()
         # For the minor ticks, use no labels; default NullFormatter.
         ax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(1))
-        ax.grid(which='minor', linestyle='-')
+        ax.grid(which='minor',axis='x', linestyle='--', )
         ax.grid()
         plt.tight_layout()
         return fig, ax
