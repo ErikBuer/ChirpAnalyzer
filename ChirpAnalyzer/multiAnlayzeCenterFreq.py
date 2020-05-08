@@ -20,7 +20,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 1000
+nIterations = 100
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -34,6 +34,7 @@ with open(destination,'rb') as f:
 # Wrapper for estimation function 
 def cyclicFreqEstimator(sig, Fs, **kwargs):
     SCD, f, alpha = estimate.FAM(sig, Fs = Fs, plot=False, method='conj', scale='linear', **kwargs)
+    kwargs.pop('fCenterPriori')   # removes fCenterPriori from kwargs library.
     fCenter, R_symb = estimate.cyclicEstimator( SCD, f, alpha, bandLimited=True , **kwargs)
     return fCenter
 
@@ -52,12 +53,15 @@ def CRLB(sig, Fs, packetSize, SNR, cleanSig, **kwargs):
     #CRLBHertz = np.power(np.sqrt(CRLBOmega)*Fs/(2*np.pi), 2)
     return AbsoluteErrorHertz
 
+hammWindow = signal.hamming(np.intc(29))
+
 # Configure estimators
 estimators = []
 estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
-estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
+#estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $T_s$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
-estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
+#estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
+estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$, and f distribution', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow=hammWindow))
 estimators.append(estimator('$\sqrt{CRLB}$ [Hz]', CRLB, packetSize=packetSize, Fs=Fs))
 
 # Create analysis object
@@ -68,7 +72,7 @@ EbN0Start = 40
 EbN0End = 10
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End)
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='fCenter', packetSize=packetSize, debug=Debug)

@@ -11,6 +11,20 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
+debug=False
+if debug==False:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "lualatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
+
+import rftool.LFM as LFM
+import rftool.utility as util
+import rftool.estimation as estimate
+
 # Print ndarray as Latex matrix
 def bmatrix(a):
     """Returns a LaTeX bmatrix
@@ -26,25 +40,11 @@ def bmatrix(a):
     rv +=  [r'\end{bmatrix}']
     return '\n'.join(rv)
 
-debug=False
-if debug==False:
-    mpl.use("pgf")
-    mpl.rcParams.update({
-        "pgf.texsystem": "lualatex",
-        'font.family': 'serif',
-        'text.usetex': True,
-        'pgf.rcfonts': False,
-    })
-
-import rftool.LFM as LFM
-import rftool.utility as util
-import rftool.estimation as estimate
 
 imagePath = '../figures/linFM/'
 
-FM = LFM.chirp(30e3,5e-3, 1, 5e3, 4, direction='up')
+FM = LFM.chirp(60e3,5e-3, 0e3, 5.2e3, 4, direction='up')
 FM.plotSymbols()
-
 if debug==False:
     fileName = 'symbolIf'
     plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
@@ -67,6 +67,7 @@ print(bmatrix(corrmatDb))
 # LoRa-like synchronization sequence
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
+ax.set_ymargin(0.0)
 
 FM = LFM.chirp(300e3, (1/440), 1, 126e3, 8, direction='both')
 dt = FM.dt

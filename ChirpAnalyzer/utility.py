@@ -118,8 +118,8 @@ class analysis:
             for m, SNR in enumerate(SNRVector):
                 sig_noisy_t = util.wgnSnr( sig_t, SNR)
                 tic = timeit.default_timer()
-                # cleanSig and SNR is passed to enable CRLB calculation 
-                estimate = estimator.function(sig_noisy_t, **estimator.kwargs, SNR=SNR, cleanSig=sig_t)
+                # cleanSig and SNR is passed to enable CRLB calculation, fCenter for a-priori freq info for some estimators
+                estimate = estimator.function(sig_noisy_t, **estimator.kwargs, SNR=SNR, cleanSig=sig_t, fCenterPriori=m_waveform.fCenter)
                 toc = timeit.default_timer()
                 
                 # Calculate Accumulated Absolute Error

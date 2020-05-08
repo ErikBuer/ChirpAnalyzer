@@ -20,7 +20,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 1000
+nIterations = 51
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -30,28 +30,39 @@ destination = path + filename + '.pkl'
 with open(destination,'rb') as f:
     alphaWindow = pickle.load(f)
 
+# Compare the method of 
+def symbolrateAutocorr(sig, Fs, **kwargs):
+    Rxx = signal.fftconvolve(sig, sig, mode='same')
+    
+    tau = estimate.f0MLE(Rxx, tau, 5)
+    return f0
 
 # Wrapper for estimation function 
-def symbolRateEstimator(sig, Fs, **kwargs):
+def symbolRateEstimator(sig, Fs, aPrioriFCenter=False, **kwargs):
+    # Ensure that the true center frequency is only used in the intended case
+    if aPrioriFCenter==False:
+        kwargs.pop('fCenterPriori')   # removes fCenterPriori from kwargs library
+
     SCD, f, alpha = estimate.FAM(sig, Fs = Fs, plot=False, method='conj', scale='linear', **kwargs)
-    fCenter, R_symb = estimate.cyclicEstimator( SCD, f, alpha, bandLimited=True , **kwargs)
+    fCenter, R_symb = estimate.cyclicEstimator( SCD, f, alpha, **kwargs)
     return R_symb
 
 # Configure estimators
 estimators = []
 estimators.append(estimator('Cyclic MLE Method', symbolRateEstimator, Fs=Fs))
-estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, Fs=Fs, alphaWindow=alphaWindow))
-estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
+estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))
+estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs))
+estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
 
 # Create analysis object
-m_analysis = analysis('Center_Frequency_Estimation', estimators=estimators, lossFcn='MAE')
+m_analysis = analysis('Symbol_Rate_Estimation', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 40
 EbN0End = 10
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End)
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='symbolRate', packetSize=packetSize, debug=Debug)
@@ -82,7 +93,7 @@ fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MA
 #ax.legend(loc='lower right')
 #fig.set_figheight(2.5)
 plt.tight_layout()
-imagePath = '../figures/centerFreqEst/'
+imagePath = '../figures/symRateEst/'
 if Debug == False:
     fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
     plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
