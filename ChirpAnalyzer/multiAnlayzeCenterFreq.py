@@ -53,15 +53,12 @@ def CRLB(sig, Fs, packetSize, SNR, cleanSig, **kwargs):
     #CRLBHertz = np.power(np.sqrt(CRLBOmega)*Fs/(2*np.pi), 2)
     return AbsoluteErrorHertz
 
-hammWindow = signal.hamming(np.intc(29))
-
 # Configure estimators
 estimators = []
 estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
 #estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $T_s$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
-#estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
-estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$, and f distribution', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow=hammWindow))
+estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
 estimators.append(estimator('$\sqrt{CRLB}$ [Hz]', CRLB, packetSize=packetSize, Fs=Fs))
 
 # Create analysis object

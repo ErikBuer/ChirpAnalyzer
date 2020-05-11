@@ -20,7 +20,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 51
+nIterations = 100
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -30,11 +30,26 @@ destination = path + filename + '.pkl'
 with open(destination,'rb') as f:
     alphaWindow = pickle.load(f)
 
+# Plot results
+import matplotlib.pyplot as plt
+plt.style.use('masterThesis')
+import matplotlib
+imagePath = '../figures/symRateEst/'
+
+if Debug==False:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "lualatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
+
+
 # Compare the method of 
 def symbolrateAutocorr(sig, Fs, **kwargs):
-    Rxx = signal.fftconvolve(sig, sig, mode='same')
-    
-    tau = estimate.f0MLE(Rxx, tau, 5)
+    Rxx = np.abs(signal.correlate(sig, sig, mode='full', method='fft'))
+    f0 = estimate.f0MleTime(Rxx=Rxx, f=Fs, peaks=5)
     return f0
 
 # Wrapper for estimation function 
@@ -49,8 +64,9 @@ def symbolRateEstimator(sig, Fs, aPrioriFCenter=False, **kwargs):
 
 # Configure estimators
 estimators = []
+"""estimators.append(estimator('Autocorrelation MLE', symbolrateAutocorr, Fs=Fs))
 estimators.append(estimator('Cyclic MLE Method', symbolRateEstimator, Fs=Fs))
-estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))
+estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))"""
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
 
@@ -83,17 +99,13 @@ destination = path + filename + str(iterations) + '.pkl'
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)"""
 
-# Plot results
-import matplotlib.pyplot as plt
-plt.style.use('masterThesis')
-import matplotlib
-
 iterations = nIterations
 fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MAE [Hz]')
 #ax.legend(loc='lower right')
 #fig.set_figheight(2.5)
 plt.tight_layout()
-imagePath = '../figures/symRateEst/'
+
+
 if Debug == False:
     fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
     plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
