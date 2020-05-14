@@ -1,3 +1,6 @@
+
+# Utilization of LFM.chirp object for LoRa-like signal generation.
+
 import scipy.signal as signal
 import scipy.optimize as optimize
 import scipy.integrate as integrate

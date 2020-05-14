@@ -1,7 +1,10 @@
 import numpy as np
 import rftool.utility as util
 import rftool.radar as radar
+import rftool.estimation as estimate
+import rftool.LFM as LFM
 import joblib   # Parallelizations
+import random
 import timeit
 import pickle
 
@@ -80,40 +83,79 @@ class analysis:
         self.axis = axis()
         
 
-    def analyze(self, iterations, parameter, **kwargs):
+    def analyze(self, iterations, parameter, signalType='NLFM', **kwargs):
         """
         Iterate through the estimators and estimate.
         iterations is the number of iterations per SNR scenario.
         parameter is the parameter to be estimated as a string. Must be the same as the parametername in the wavefrom object. 
+        signalType decides which signal type is to be applied. 'NLFM' uses the radar.chirp object, 'LFM' uses the LFM.chirp object for signal generation.
         """
         packetSize = kwargs.get('packetSize', 1)
+
         debug = kwargs.get('debug', False)
         self.iterations = iterations
+        m_waveform = kwargs.get('m_waveform')
 
-        def estmate(i, SNRVector, estimator, packetSize=1):
+        def estimate(i, SNRVector, estimator, packetSize=1, **kwargs):
             print(estimator.name, 'iteration',i)
 
             time = np.empty_like(SNRVector)
             AE = np.empty_like(SNRVector)
 
-            # Load from binary file
-            filename = str(i)
-            fileString = self.path + filename + ".pkl"
+            if signalType == 'NLFM':
+                # Load from binary file
+                filename = str(i)
+                fileString = self.path + filename + ".pkl"
 
-            with open(fileString,'rb') as f:
-                m_waveform = pickle.load(f)
+                with open(fileString,'rb') as f:
+                    m_waveform = pickle.load(f)
 
-            FM = radar.chirp(m_waveform.Fs)
-            FM.targetOmega_t = m_waveform.omega_t
-            FM.points = len(m_waveform.omega_t)
+                FM = radar.chirp(m_waveform.Fs)
+                FM.targetOmega_t = m_waveform.omega_t
+                FM.points = len(m_waveform.omega_t)
 
-            if 1<packetSize:
-                bitstream = np.random.randint(0, 2, packetSize)
-                m_waveform.packet=bitstream
-                sig_t = FM.modulate( bitstream )
-            else:
-                sig_t = FM.genNumerical()
-                m_waveform.packet=1
+                if 1<packetSize:
+                    bitstream = np.random.randint(0, 2, packetSize)
+                    m_waveform.packet=bitstream
+                    sig_t = FM.modulate( bitstream )
+                else:
+                    sig_t = FM.genNumerical()
+                    m_waveform.packet=1
+
+            elif signalType == 'LFM':
+                m_waveform = kwargs.get('m_waveform')
+                # Fixed BW, Random Center Frequency
+                fStart = random.uniform(10e3,100e3)
+                fStop = fStart+50e3
+                fCenter = fStop-(fStop-fStart)/2
+
+                m_waveform.fCenter = fCenter
+                m_waveform.fStart = fStart
+                m_waveform.fStop = fStop
+
+                FM = LFM.chirp(Fs=m_waveform.Fs, T=m_waveform.T, fStart=fStart, fStop=fStop, nChirps=8, direction='both') # Both directions and 8 symbols are configured in order to generate the sync sequence.
+                
+                sig_t = FM.getSymbolSig(0)
+
+                if 1<packetSize:
+                    addSyncSeq = kwargs.get('syncSeq', False)
+                    if addSyncSeq == True:
+                        synqSeqSymbols = np.array([0,0,0,0,0,0,0,0,1,1,4,4,4])
+                        symbolStream = np.random.randint(0, 4, packetSize-len(synqSeqSymbols)+1)
+                        synqSeq = FM.modulate( synqSeqSymbols )
+                        # Remove the last three quartes of a symbol
+                        clipLen = np.intc(FM.Fs*FM.T*0.75)
+                        synqSeq = synqSeq[:-clipLen]
+                        # Add a random packet to the sync sequence
+                        sig_t = FM.modulate( symbolStream )
+                        sig_t = np.append(synqSeq, sig_t)
+                    else:
+                        symbolStream = np.random.randint(0, 4, packetSize)
+                        m_waveform.packet=symbolStream
+                        sig_t = FM.modulate( symbolStream )
+                else:
+                    sig_t = FM.getSymbolSig()
+                    m_waveform.packet=1
 
             for m, SNR in enumerate(SNRVector):
                 sig_noisy_t = util.wgnSnr( sig_t, SNR)
@@ -143,14 +185,14 @@ class analysis:
         for estimator in self.estimators:
             # CRLB calculation, only run once for each SNR
             if 'CRLB' in estimator.name:
-                estimator.errorMat = estmate(i=0, SNRVector=self.axis.vector, estimator=estimator, packetSize=packetSize)
+                estimator.errorMat = estimate(i=0, SNRVector=self.axis.vector, estimator=estimator, packetSize=packetSize)
                 estimator.meanTime = np.nan
                 estimator.iterations = np.nan
             else:
                 if debug == True:
-                    result = joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+                    result = joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(estimate)(i, self.axis.vector, estimator, **kwargs) for i in range(0, iterations))
                 else:
-                    result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estmate)(i, self.axis.vector, estimator, packetSize=packetSize) for i in range(0, iterations))
+                    result = joblib.Parallel(n_jobs=8, verbose=0)(joblib.delayed(estimate)(i, self.axis.vector, estimator, **kwargs) for i in range(0, iterations))
                 result = np.array(result)
                 error = result[:,0,:]
                 time = result[:,1,:]

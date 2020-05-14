@@ -18,11 +18,12 @@ import matplotlib as mpl
 import pickle
 #import os
 
-Debug = False
+
+Debug = False #! Set to Flase to save images
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 10
+nIterations = 5
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -47,6 +48,12 @@ if Debug==False:
         'pgf.rcfonts': False,
     })
 
+
+# Generate waveform object With waveform() to be handed to utility.analysis
+m_waveform = waveform()
+m_waveform.Fs = Fs
+m_waveform.T = T
+m_waveform.symbolRate = 1/T
 
 # Compare the method of 
 def symbolrateAutocorr(sig, Fs, **kwargs):
@@ -73,7 +80,7 @@ estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, aP
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
 
 # Create analysis object
-m_analysis = analysis('Symbol_Rate_Estimation', estimators=estimators, lossFcn='MAE')
+m_analysis = analysis('Symbol_Rate_Estimation_LoRa-Like', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 40
@@ -83,11 +90,11 @@ m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
 m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
-m_analysis.analyze(iterations=nIterations, parameter='symbolRate', packetSize=packetSize, debug=Debug)
+m_analysis.analyze(iterations=nIterations, parameter='symbolRate', packetSize=packetSize, debug=Debug, signalType='LFM', m_waveform=m_waveform, syncSeq=False)
 
 # Write to binary file
 path = '../jobs/'
-jobname = 'SRateJob'
+jobname = 'SRateJobLoRa-Like'
 destination = path + jobname + str(m_analysis.iterations) + '.pkl'
 # Save job to binary file
 with open(destination,'wb') as f:
@@ -97,7 +104,7 @@ iterations =  nIterations #! Must be same as job file
 """
 # Read from binary file
 path = '../jobs/'
-jobname = 'SRateJob'
+jobname = 'SRateJobLoRa-Like'
 destination = path + jobname + str(iterations) + '.pkl'
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)"""
@@ -107,6 +114,42 @@ ax.legend(loc='upper right')
 #fig.set_figheight(2.5)
 plt.tight_layout()
 
+
+if Debug == False:
+    fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
+    plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+    plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+
+#_________________________________________________________________________________________________________________________________
+# Create analysis object
+m_analysis = analysis('Symbol_Rate_Estimation_LoRa-Like_SyncSeq', estimators=estimators, lossFcn='MAE')
+
+m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
+m_analysis.axis.name = 'S/N [dB]'
+m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
+m_analysis.analyze(iterations=nIterations, parameter='symbolRate', packetSize=packetSize, debug=Debug, signalType='LFM', m_waveform=m_waveform, syncSeq=True)
+
+# Write to binary file
+jobname = 'SRateJobLoRa-Like_SyncSeq'
+destination = path + jobname + str(m_analysis.iterations) + '.pkl'
+# Save job to binary file
+with open(destination,'wb') as f:
+    pickle.dump(m_analysis, f)
+
+iterations =  nIterations #! Must be same as job file
+"""
+# Read from binary file
+path = '../jobs/'
+jobname = 'SRateJobLoRa-Like'
+destination = path + jobname + str(iterations) + '.pkl'
+with open(destination,'rb') as f:
+    m_analysis = pickle.load(f)"""
+
+fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MAE [Hz]')
+ax.legend(loc='upper right')
+#fig.set_figheight(2.5)
+plt.tight_layout()
 
 if Debug == False:
     fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
