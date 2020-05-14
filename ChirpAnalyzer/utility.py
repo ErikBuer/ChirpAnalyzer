@@ -161,6 +161,10 @@ class analysis:
     
     
     def plotResults(self, pgf=False, **kwargs):
+        """
+        Function for plotting the estimated data
+        kwarg: scale defines the scale of the y-axis for the plot. allowed values: linear, semilogy, semilogx, dBmag
+        """
         scale = kwargs.pop('scale', 'linear')
         plotYlabel = kwargs.pop('plotYlabel', self.lossFcn)
 

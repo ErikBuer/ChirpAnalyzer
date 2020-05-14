@@ -27,9 +27,9 @@ destination = path + filename + str(12) + '.pkl'
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)
 
-m_analysis.plotResults(pgf=True)
-
-imagePath = '../figures/'
+fig, ax = m_analysis.plotResults(pgf=True, scale = 'semilogy')
+ax.legend(loc='upper right')
+imagePath = '../figures/IFestimation/'
 fileName = m_analysis.name +'_'+ str(12) + '_iterations' # str(m_analysis.iterations)
 plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
 plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')

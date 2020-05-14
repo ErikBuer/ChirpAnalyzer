@@ -48,7 +48,6 @@ modSig = NLFM.modulate( package )
 modSig = util.wgnSnr(modSig, 20)
 """
 
-
 ########################################################################
 
 DerivIF = estimate.instFreq(sig_t, Fs)

@@ -74,7 +74,7 @@ if debug == False:
 
 # Spectral Correlation Density
 SCD, f, alpha = estimate.FAM(modSig, Fs = Fs, plot=False, method='conj', scale='linear')
-estimate.cyclicEstimator( SCD, f, alpha, bandLimited=True )
+estimate.cyclicEstimator( SCD, f, alpha, bandLimited=False )
 
 SCDplt = np.abs(SCD)
 fig = plt.figure()

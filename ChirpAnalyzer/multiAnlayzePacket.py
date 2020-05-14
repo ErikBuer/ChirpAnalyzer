@@ -23,7 +23,7 @@ import pickle
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 100
+nIterations = 10
 
 def packetExtractor( sig_t, Fs, T, **kwargs ):
     """
@@ -62,7 +62,7 @@ with open(destination,'wb') as f:
     pickle.dump(m_analysis, f)
 
 
-m_analysis.plotResults(pgf=True)
+m_analysis.plotResults(pgf=True, scale='semilogy')
 
 imagePath = '../figures/'
 fileName = m_analysis.name +'_'+ str(nIterations) + '_iterations' # str(m_analysis.iterations)

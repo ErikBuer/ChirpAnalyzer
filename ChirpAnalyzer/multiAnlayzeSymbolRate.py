@@ -20,7 +20,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 100
+nIterations = 10
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -64,9 +64,9 @@ def symbolRateEstimator(sig, Fs, aPrioriFCenter=False, **kwargs):
 
 # Configure estimators
 estimators = []
-"""estimators.append(estimator('Autocorrelation MLE', symbolrateAutocorr, Fs=Fs))
+estimators.append(estimator('Autocorrelation MLE', symbolrateAutocorr, Fs=Fs))
 estimators.append(estimator('Cyclic MLE Method', symbolRateEstimator, Fs=Fs))
-estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))"""
+estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
 
@@ -83,25 +83,25 @@ m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='symbolRate', packetSize=packetSize, debug=Debug)
 
-"""# Write to binary file
+# Write to binary file
 path = '../jobs/'
-filename = 'Job'
-destination = path + filename + str(m_analysis.iterations) + '.pkl'
+jobname = 'SRateJob'
+destination = path + jobname + str(m_analysis.iterations) + '.pkl'
 # Save job to binary file
 with open(destination,'wb') as f:
     pickle.dump(m_analysis, f)
 
-
+iterations =  nIterations #! Must be same as job file
+"""
 # Read from binary file
 path = '../jobs/'
-filename = 'symbolRateJob'
-destination = path + filename + str(iterations) + '.pkl'
+jobname = 'SRateJob'
+destination = path + jobname + str(iterations) + '.pkl'
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)"""
 
-iterations = nIterations
 fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MAE [Hz]')
-#ax.legend(loc='lower right')
+ax.legend(loc='upper right')
 #fig.set_figheight(2.5)
 plt.tight_layout()
 

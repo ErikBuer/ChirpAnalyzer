@@ -6,7 +6,7 @@ plt.style.use('masterThesis')
 import matplotlib as mpl
 
 pgf=True
-imagePath = '../figures/cycloDemo/'
+imagePath = '../figures/LfmNlfmComparison/'
 
 if pgf==True:
     mpl.use("pgf")
@@ -22,8 +22,8 @@ import rftool.radar as radar
 import rftool.utility as util
 import rftool.estimation as estimate
 
-Fs=np.intc(800e3)   # receiver sample rate
-T=np.float(4e-3)    # Pulse duration
+Fs=np.intc(802e3)   # receiver sample rate
+T=np.float(6e-3)    # Pulse duration
 points = np.intc(Fs*T)
 t = np.linspace(0, T, points)
 
@@ -50,9 +50,9 @@ plt.plot(t, LFMsig)"""
 NLFMsig = NLFM.genFromPoly()
 signals = np.stack((LFMsig, NLFMsig), axis=-1)
 
-"""radar.ACF(signals, label=['LFM', 'NLFM'])
-plt.savefig(imagePath+'ACF_compare'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-plt.savefig(imagePath+'ACF_compare'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')"""
+radar.ACF(signals, label=['LFM', 'NLFM'])
+plt.savefig(imagePath+'ACF_compare'+'.png', bbox_inches='tight')
+plt.savefig(imagePath+'ACF_compare'+'.pgf', bbox_inches='tight')
 
 
 bitStream = np.random.randint(0, 2, 32)
@@ -65,7 +65,7 @@ estimate.cyclicEstimator( SCD, f, alpha, bandLimited=True )
 
 SCDplt = np.abs(SCD)
 fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
+"""ax = fig.add_subplot(1, 1, 1)
 # Plot for positive frequencies
 im = ax.pcolormesh(alpha, f[np.intc(len(f)/2):-1], SCDplt[np.intc(len(f)/2):-1,:], edgecolors='none')
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
@@ -75,10 +75,9 @@ ax.set_ylabel("f [Hz]")
 
 fig.colorbar(im)
 plt.tight_layout()
-
 if pgf==True:
     plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')"""
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
@@ -87,7 +86,7 @@ ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 ax.set_xlabel("alpha [Hz]")
 ax.set_ylabel("Correlation")
 if pgf==True:
-    plt.savefig(imagePath+'S_fc'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'S_fc'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'S_fc'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'S_fc'+'.pgf', bbox_inches='tight')
 
 plt.show()
