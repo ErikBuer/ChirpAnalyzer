@@ -134,14 +134,12 @@ class analysis:
                 m_waveform.fStop = fStop
 
                 FM = LFM.chirp(Fs=m_waveform.Fs, T=m_waveform.T, fStart=fStart, fStop=fStop, nChirps=8, direction='both') # Both directions and 8 symbols are configured in order to generate the sync sequence.
-                
-                sig_t = FM.getSymbolSig(0)
 
                 if 1<packetSize:
                     addSyncSeq = kwargs.get('syncSeq', False)
                     if addSyncSeq == True:
                         synqSeqSymbols = np.array([0,0,0,0,0,0,0,0,1,1,4,4,4])
-                        symbolStream = np.random.randint(0, 4, packetSize-len(synqSeqSymbols)+1)
+                        symbolStream = np.random.randint(0, 4, packetSize-len(synqSeqSymbols))
                         synqSeq = FM.modulate( synqSeqSymbols )
                         # Remove the last three quartes of a symbol
                         clipLen = np.intc(FM.Fs*FM.T*0.75)

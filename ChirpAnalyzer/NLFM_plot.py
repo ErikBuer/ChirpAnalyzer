@@ -5,13 +5,17 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-mpl.use("pgf")
-mpl.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+
+debug = True
+
+if debug == False:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
 imagePath = '../figures/NLFM_example/'
 
@@ -41,33 +45,40 @@ ax.plot(window_t)
 ax.set_xticklabels([])
 plt.xlabel("Instantaneous Freuqncy")
 plt.ylabel("Weighting")
-plt.savefig(imagePath + 'NLFM_window.png', bbox_inches='tight')
-plt.savefig(imagePath + 'NLFM_window.pgf', bbox_inches='tight')
+plt.tight_layout()
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_window.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_window.pgf', bbox_inches='tight')
 
 fig, ax = plt.subplots()
 fig.set_size_inches(7,1.75)
 ax.plot(t, np.real(NLFMsig))
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude [$\Re\{\cdot\}$]")
-plt.savefig(imagePath + 'NLFM_time-domain.png', bbox_inches='tight')
-plt.savefig(imagePath + 'NLFM_time-domain.pgf', bbox_inches='tight')
+plt.tight_layout()
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_time-domain.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_time-domain.pgf', bbox_inches='tight')
 
 fig, ax = plt.subplots()
 fig.set_size_inches(7,1.75)
 ax.plot(t, NLFM.targetOmega_t)
 plt.xlabel("Time [s]")
 plt.ylabel("Instantaneous Frequency [Hz]")
-plt.savefig(imagePath + 'NLFM_omega_time-domain.png', bbox_inches='tight')
-plt.savefig(imagePath + 'NLFM_omega_time-domain.pgf', bbox_inches='tight')
+plt.tight_layout()
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_omega_time-domain.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_omega_time-domain.pgf', bbox_inches='tight')
 
 util.periodogram(NLFMsig, Fs)
-plt.savefig(imagePath + 'NLFM_welch.png', bbox_inches='tight')
-plt.savefig(imagePath + 'NLFM_welch.pgf', bbox_inches='tight')
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_welch.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_welch.pgf', bbox_inches='tight')
 
-
-radar.ACF(NLFMsig, label='LFM')
-plt.savefig(imagePath + 'NLFM_ACF.png', bbox_inches='tight')
-plt.savefig(imagePath + 'NLFM_ACF.pgf', bbox_inches='tight')
+radar.ACF(NLFMsig, label='NLFM')
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_ACF.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_ACF.pgf', bbox_inches='tight')
 
 """radar.hilbert_spectrum(np.real(NLFMsig), Fs, label='NLFM')
 plt.savefig('NLFM_Hilbert.png', bbox_inches='tight')

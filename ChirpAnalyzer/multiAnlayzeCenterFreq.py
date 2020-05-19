@@ -16,11 +16,11 @@ import matplotlib as mpl
 import pickle
 #import os
 
-Debug = False
+Debug = True
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 100
+nIterations = 4
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -40,6 +40,7 @@ def cyclicFreqEstimator(sig, Fs, **kwargs):
 
 # Wrapper for CRLB calculator
 def CRLB(sig, Fs, packetSize, SNR, cleanSig, **kwargs):
+    dt=1/Fs
     symblen = np.intc(len(sig)/packetSize)
     p_n =  cleanSig[0:symblen] # the energy of one pulse is the same as sum(abs(symbol)). The symbols has a magnitude of one
     # Number of pulses
@@ -48,14 +49,14 @@ def CRLB(sig, Fs, packetSize, SNR, cleanSig, **kwargs):
     l_k = np.linspace(0, K-1, K)*len(p_n)
     # Calculate Noise power N
     N =  util.db2pow(util.powerdB(p_n) - SNR)
-    CRLBOmega = estimate.pulseCarrierCRLB(p_n, K, l_k, N)
-    AbsoluteErrorHertz = np.sqrt(CRLBOmega)*Fs/(2*np.pi)
-    #CRLBHertz = np.power(np.sqrt(CRLBOmega)*Fs/(2*np.pi), 2)
-    return AbsoluteErrorHertz
+    CRLBOmega = estimate.pulseCarrierCRLB(p_n, Fs, K, l_k, N)
+    CRLBHertz = np.sqrt(CRLBOmega)/(2*np.pi)#*Fs/(2*np.pi)
+    #CRLB = np.power(np.sqrt(CRLBOmega)*Fs/(2*np.pi), 2)
+    return CRLBHertz
 
 # Configure estimators
 estimators = []
-estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle' , nfft=459))
+estimators.append(estimator('DFT MLE Method', estimate.carierFrequencyEstimator, Fs=Fs, method='mle', nfft=459))
 #estimators.append(estimator('Cyclic MLE Method', cyclicFreqEstimator, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $T_s$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow))
 estimators.append(estimator('Cyclic MLE A-Priori $T_s$, $\Omega$', cyclicFreqEstimator, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))
@@ -67,11 +68,12 @@ m_analysis = analysis('Center_Frequency_Estimation', estimators=estimators, loss
 # Generate Eb/N0 range for statistics gathering.
 EbN0Start = 40
 EbN0End = 10
+EbN0Range = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, EbN0Start-EbN0End+1)
+m_analysis.axis.displayVector = EbN0Range
 m_analysis.axis.name = 'S/N [dB]'
-m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
+m_analysis.axis.vector = comm.EbN0toSNRdB(EbN0Range, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='fCenter', packetSize=packetSize, debug=Debug)
 
 """# Write to binary file
@@ -96,7 +98,7 @@ plt.style.use('masterThesis')
 import matplotlib
 
 iterations = nIterations
-fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MAE [Hz]')
+fig, ax = m_analysis.plotResults(pgf=not Debug, scale='semilogy', plotYlabel='MSE [Hz]')
 ax.legend(loc='lower right')
 #ax.set_ymargin = 0.1
 fig.set_figheight(2.5)
@@ -106,6 +108,8 @@ if Debug == False:
     fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
     plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
     plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+
+plt.show()
 
 ax.lines.pop(-1)
 #ax.set_ymargin = 0.1

@@ -47,8 +47,8 @@ EbN0End = 24
 EbN0Vec = np.linspace(EbN0End, EbN0Start, 41)
 SnrVec = comm.EbN0toSNRdB(EbN0Vec, 2, Fs, 1/T)
 
-m_analysis.axis.displayName = 'S/N [dB]'
-m_analysis.axis.displayVector = SnrVec
+m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
+m_analysis.axis.displayVector = EbN0Vec
 m_analysis.axis.name = 'S/N [dB]'
 m_analysis.axis.vector = SnrVec
 m_analysis.analyze(iterations=nIterations, parameter='packet', packetSize=10, debug=False)

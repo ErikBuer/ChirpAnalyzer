@@ -30,7 +30,7 @@ T=np.float(6e-3)  # Pulse duration
 points = np.intc(Fs*T)
 t = np.linspace(0, T, points)
 
-targetBw=100e3      # Pulse BW
+targetBw=50e3      # Pulse BW
 centerFreq=100e3    # Pulse center frequency
 
 # Time domain window for NLFM generation
@@ -61,7 +61,7 @@ t = np.linspace(0, len(Rxx)*dt,len(Rxx))
 fig, ax = plt.subplots()
 ax.set_xmargin(0.01)
 ax.plot(t, Rxx)
-ax.set_xlabel('Cycle Perios [s]')
+ax.set_xlabel('Time [s]')
 ax.set_ylabel('Correlation')
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 plt.tight_layout()
@@ -87,11 +87,10 @@ ax.set_xlabel("alpha [Hz]")
 ax.set_ylabel("f [Hz]")
 fig.colorbar(im)
 plt.tight_layout()
-""" #! in Report
-if debug==False:
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')
-"""
+ #! in Report
+"""if debug==False:
+    plt.savefig(imagePath+'SCD_FM_32'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'SCD_FM_32'+'.pgf', bbox_inches='tight')"""
 
 # plot the alpha distribution for f=f_c
 fig = plt.figure()

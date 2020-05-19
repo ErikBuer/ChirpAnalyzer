@@ -18,6 +18,8 @@ import pickle
 
 Fs=np.intc(802e3) # receiver sample rate
 
+debug = False
+
 def generator(Fs, i):
     print("Signal iteration", i)
 
@@ -51,7 +53,7 @@ def generator(Fs, i):
     fStop = fStart+50e3
     fCenter = fStop-(fStop-fStart)/2
 
-    #sigObj.fCenter = fCenter
+    sigObj.fCenter = fCenter
     sigObj.fStart = fStart
     sigObj.fStop = fStop
 
@@ -62,8 +64,8 @@ def generator(Fs, i):
 
     # Center frequency is defined as the estimated center frequency in infinite SNR
     sig_t = NLFM.genNumerical()
-    sigObj.fCenter = estimate.carierFrequencyEstimator(sig_t, Fs, method='mle', nfft=len(sig_t))
-    
+    #sigObj.fCenter = estimate.carierFrequencyEstimator(sig_t, Fs, method='mle', nfft=len(sig_t))
+
     # Write to binary file
     filename = str(i)
     destination = path + filename + '.pkl'
@@ -72,4 +74,10 @@ def generator(Fs, i):
     with open(destination,'wb') as f:
         pickle.dump(sigObj, f)
 
-joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(1, 100)) # Optimally four jobs
+rStart = 500
+rStop = 1001
+
+if debug == False:
+    joblib.Parallel(n_jobs=4, verbose=0)(joblib.delayed(generator)(Fs, i) for i in range(rStart, rStop))
+else:
+    joblib.Parallel(n_jobs=1, verbose=10)(joblib.delayed(generator)(Fs, i) for i in range(rStart, rStop)) # Optimally four jobs

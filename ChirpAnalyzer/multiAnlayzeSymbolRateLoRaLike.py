@@ -18,12 +18,11 @@ import matplotlib as mpl
 import pickle
 #import os
 
-
-Debug = False #! Set to Flase to save images
+Debug = False #! Set to False to save images
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 5
+nIterations = 1000
 packetSize = 32
 
 # Load alpha window function a-priori
@@ -74,7 +73,7 @@ def symbolRateEstimator(sig, Fs, aPrioriFCenter=False, **kwargs):
 # Configure estimators
 estimators = []
 estimators.append(estimator('Autocorrelation MLE', symbolrateAutocorr, Fs=Fs))
-estimators.append(estimator('Cyclic MLE Method', symbolRateEstimator, Fs=Fs))
+#estimators.append(estimator('Cyclic MLE Method', symbolRateEstimator, Fs=Fs))
 estimators.append(estimator('Cyclic MLE Method, Full BW', symbolRateEstimator, Fs=Fs, bandLimited=False))
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs))
 estimators.append(estimator('Cyclic MLE A-Priori $f_c$, $\Omega$', symbolRateEstimator, aPrioriFCenter=True, Fs=Fs, alphaWindow=alphaWindow, fWindow='triangle', fWindowWidthHertz=50e3))

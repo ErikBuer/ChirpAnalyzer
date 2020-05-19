@@ -5,13 +5,16 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-mpl.use("pgf")
-mpl.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+debug = True
+
+if debug == False:
+    mpl.use("pgf")
+    mpl.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
 imagePath = '../figures/LFM_example/'
 
@@ -39,8 +42,10 @@ ax.plot(t, np.real(LFMsig))
 #plt.grid()
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude [$\Re\{\cdot\}$]")
-plt.savefig(imagePath + 'LFM_time-domain.png', bbox_inches='tight')
-plt.savefig(imagePath + 'LFM_time-domain.pgf', bbox_inches='tight')
+plt.tight_layout()
+if debug == False:
+    plt.savefig(imagePath + 'LFM_time-domain.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'LFM_time-domain.pgf', bbox_inches='tight')
 
 fig, ax = plt.subplots()
 fig.set_size_inches(7,1.75)
@@ -48,16 +53,20 @@ ax.plot(t, LFM.targetOmega_t)
 #plt.grid()
 plt.xlabel("Time [s]")
 plt.ylabel("Instantaneous Frequency [Hz]")
-plt.savefig(imagePath + 'LFM_omega_time-domain.png', bbox_inches='tight')
-plt.savefig(imagePath + 'LFM_omega_time-domain.pgf', bbox_inches='tight')
+plt.tight_layout()
+if debug == False:
+    plt.savefig(imagePath + 'LFM_omega_time-domain.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'LFM_omega_time-domain.pgf', bbox_inches='tight')
 
 util.periodogram(LFMsig,Fs)
-plt.savefig(imagePath + 'LFM_welch.png', bbox_inches='tight')
-plt.savefig(imagePath + 'LFM_welch.pgf', bbox_inches='tight')
+if debug == False:
+    plt.savefig(imagePath + 'LFM_welch.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'LFM_welch.pgf', bbox_inches='tight')
 
 radar.ACF(LFMsig, label='LFM')
-plt.savefig(imagePath + 'LFM_ACF.png', bbox_inches='tight')
-plt.savefig(imagePath + 'LFM_ACF.pgf', bbox_inches='tight')
+if debug == False:
+    plt.savefig(imagePath + 'LFM_ACF.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'LFM_ACF.pgf', bbox_inches='tight')
 
 """radar.hilbert_spectrum(np.real(LFMsig), Fs, label='NLFM')
 plt.savefig('LFM_Hilbert.png', bbox_inches='tight')

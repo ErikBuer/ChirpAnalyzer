@@ -89,11 +89,11 @@ ax.set_xlabel("alpha [Hz]")
 ax.set_ylabel("f [Hz]")
 fig.colorbar(im)
 plt.tight_layout()
-""" #! in Report
+ #! in Report
 if debug==False:
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')
-"""
+    plt.savefig(imagePath+'SCD_FM_32'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'SCD_FM_32'+'.pgf', bbox_inches='tight')
+
 
 # plot the alpha distribution for f=f_c
 fig = plt.figure()
