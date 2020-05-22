@@ -9,7 +9,9 @@ import rftool.radar as radar
 import rftool.LFM as LFM
 import rftool.utility as util
 import rftool.estimation as estimate
-import tftb as tftb
+#import tftb as tftb                        # WVD
+from pyhht.visualization import plot_imfs   # Hilbert-Huang TF analysis
+from pyhht import EMD                       # Hilbert-Huang TF analysis
 imagePath = '../figures/EMD/'
 
 debug = False
@@ -25,7 +27,7 @@ if debug== False:
 
 Fs=np.intc(802e3) # receiver sample rate
 dt = 1/Fs
-T=np.float(6e-3)  # Pulse duration
+T=np.float(6e-3)/4  # Pulse duration
 
 
 # Time domain window for NLFM generation
@@ -38,56 +40,53 @@ window_t = signal.hamming(np.intc(2048))
 #window_t = signal.gaussian(np.intc(2048), 360)
 #window_t = signal.gaussian(np.intc(2048), 400)
 
-NLFM.getCoefficients( window_t, targetBw=100e3, centerFreq=100e3, T=T)
+NLFM.getCoefficients( window_t, targetBw=100e3/4, centerFreq=100e3/4, T=T)
 sig_t = NLFM.genNumerical()
+t = np.linspace(-T/2, (T/2)-dt, len(sig_t))
 SNR = 10 # dB
 SnrString = 'SNR_'+str(SNR)
-
 sig_t = util.wgnSnr(sig_t, SNR)
 
 ########################################################################
-""" # TODO
-IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
-IFmaxDHHT_AE = np.abs(np.subtract(NLFM.targetOmega_t, IFmaxDHHT))
-
-plt.figure()
-plt.subplot(211)
-plt.plot(IFmaxDHHT, label='')
-plt.ylim(0,300000)
-plt.ylabel("$f$ [Hz]")
-plt.title('Estimated IF')
-plt.tight_layout()
-#plt.legend()
-
-plt.subplot(212)
-plt.plot(IFmaxDHHT_AE, label='Absolute Error')
-plt.ylabel("Error [Hz]")
-plt.title('Absolute Error')
-plt.tight_layout()
-#plt.legend()
-
-if debug== False:
-    plt.savefig(imagePath+'IFmaxDHHT_'+SnrString+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'IFmaxDHHT_'+SnrString+'.pgf', bbox_inches='tight')
-    plt.savefig(imagePath+'Hilbert_'+SnrString+'.pgf', bbox_inches='tight')
-"""
-
-"""# Generate linear chirp
-FM = LFM.chirp(Fs=Fs,T=T, fStart=50e3, fStop=150e3, nChirps=4, direction='up')
-symbol=1
-sig_t = FM.getSymbolSig(symbol)"""
 
 # Generate linear chirp (simple)
-FM = LFM.chirp(Fs=Fs,T=T/4, fStart=20e3, fStop=80e3, nChirps=4, direction='up')
-sig_t = FM.getSymbolSig(1)
+T=1e-6
+T=T
+"""FM = LFM.chirp(Fs=Fs,T=T, fStart=40e3, fStop=60e3, nChirps=4, direction='up')
+sig_t1 = np.real(FM.getSymbolSig(0))
 
-HH = estimate.HilberHuang(np.real(sig_t), Fs)
-fig, ax = HH.discreteSpectrum( frequencyBins=200, decimateTime=4, filterSigma=1 )
-ax.set_ylim(0, 100e3)
-#fig, ax = HH.spectrum()
-plt.title=('')
+FM = LFM.chirp(Fs=Fs,T=T, fStart=10e3, fStop=40e3, nChirps=4, direction='up')
+sig_t2 = np.real(FM.getSymbolSig(1))
+
+sig_t = sig_t1+sig_t2
+t = np.linspace(-T/2, (T/2)-dt, len(sig_t))"""
+
+decomposer = EMD(np.real(sig_t))
+imfs = decomposer.decompose()
+print('len(imfs)', len(imfs))
+
+
+fig = plt.figure(figsize=(7, 5))
+axs = fig.subplots(len(imfs)+1,1)
+axs[0].plot(sig_t)
+axs[0].set_yticklabels([])
+axs[0].set_xticklabels([])
+axs[0].set_ylabel('$s(t)$')
+
+for i in range(1,len(imfs)+1):
+    axs[i].plot(t, imfs[i-1])
+    axs[i].set_ylabel('I '+str(i))
+    axs[i].set_yticklabels([])
+    if i<len(imfs):
+        axs[i].set_xticklabels([])
+
+axs[-1].set_ylabel('Res.')
+axs[-1].set_xlabel('$t$ [s]')
+axs[-1].ticklabel_format(useMathText=True, scilimits=(0,3), axis='x')
+
+plt.tight_layout()
 
 if debug == False:
-    plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'EMD_'+SnrString+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'EMD_'+SnrString+'.pgf', bbox_inches='tight')
 plt.show()
