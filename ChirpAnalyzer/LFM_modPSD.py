@@ -34,10 +34,6 @@ centerFreq=4e3   # Pulse center frequency
 # Generate linear chirp
 FM = LFM.chirp(Fs,6e-3,50e3,100e3,4, direction='up')
 
-#! Study a single symbol
-"""sig_t = FM.getSymbolSig(1)
-util.welch(sig_t, Fs, nfft=np.intc(2**15))"""
-
 # Periodogram of packet
 bitstream = np.random.randint(0, 4, 32)
 sig_t = FM.modulate( bitstream )
@@ -65,4 +61,15 @@ if debug == False:
     plt.savefig(imagePath + 'LFM_modulated_PSD.png', bbox_inches='tight')
     plt.savefig(imagePath + 'LFM_modulated_PSD.pgf', bbox_inches='tight')
 
+
+"""#! Study each single symbol
+for symb in range(0,4):
+    sig_t = FM.getSymbolSig(symb)
+    util.periodogram(sig_t, Fs)
+    ax.set_xlim(0,150e3)
+    ax.set_ylim(-85,-35)
+    if debug == False:
+        plt.savefig(imagePath + 'LFM_symbol',+str(symb)+'.png', bbox_inches='tight')
+        plt.savefig(imagePath + 'LFM_symbol',+str(symb)+'.pgf', bbox_inches='tight')
+"""
 plt.show()

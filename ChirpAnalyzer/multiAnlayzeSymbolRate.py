@@ -20,7 +20,7 @@ Debug = False
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 10
+nIterations = 1000
 packetSize = 32
 
 # Load alpha window function a-priori

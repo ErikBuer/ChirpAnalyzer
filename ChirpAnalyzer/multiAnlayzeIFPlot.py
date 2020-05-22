@@ -19,10 +19,12 @@ import matplotlib
 import pickle
 import os
 
+iterations = 1
+
 # Write to binary file
 path = '../jobs/'
 filename = 'job'
-destination = path + filename + str(12) + '.pkl'
+destination = path + filename + str(iterations) + '.pkl'
 # Save job to binary file
 with open(destination,'rb') as f:
     m_analysis = pickle.load(f)
@@ -30,7 +32,7 @@ with open(destination,'rb') as f:
 fig, ax = m_analysis.plotResults(pgf=True, scale = 'semilogy')
 ax.legend(loc='upper right')
 imagePath = '../figures/IFestimation/'
-fileName = m_analysis.name +'_'+ str(12) + '_iterations' # str(m_analysis.iterations)
+fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
 plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
 plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
 

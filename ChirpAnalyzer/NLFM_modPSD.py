@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-debug = True
+debug = False
 
 if debug == False:
     mpl.use("pgf")
@@ -66,5 +66,5 @@ plt.tight_layout()
 if debug == False:
     plt.savefig(imagePath + 'NLFM_modulated_PSD.png', bbox_inches='tight')
     plt.savefig(imagePath + 'NLFM_modulated_PSD.pgf', bbox_inches='tight')
-
+    
 plt.show()

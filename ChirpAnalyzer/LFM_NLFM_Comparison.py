@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-pgf=True
+debug=True
 imagePath = '../figures/LfmNlfmComparison/'
 
-if pgf==True:
+if debug==False:
     mpl.use("pgf")
     mpl.rcParams.update({
         "pgf.texsystem": "lualatex",
@@ -27,8 +27,8 @@ T=np.float(6e-3)    # Pulse duration
 points = np.intc(Fs*T)
 t = np.linspace(0, T, points)
 
-targetBw=100e3      # Pulse BW
-centerFreq=100e3    # Pulse center frequency
+targetBw=50e3      # Pulse BW
+centerFreq=75e3    # Pulse center frequency
 
 # Time domain window for NLFM generation
 NLFM = radar.chirp(Fs)
@@ -50,43 +50,32 @@ plt.plot(t, LFMsig)"""
 NLFMsig = NLFM.genFromPoly()
 signals = np.stack((LFMsig, NLFMsig), axis=-1)
 
-radar.ACF(signals, label=['LFM', 'NLFM'])
-plt.savefig(imagePath+'ACF_compare'+'.png', bbox_inches='tight')
-plt.savefig(imagePath+'ACF_compare'+'.pgf', bbox_inches='tight')
+radar.ACF(signals, Fs=Fs, label=['LFM', 'NLFM'])
+if debug==False:
+    plt.savefig(imagePath+'ACF_compare'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'ACF_compare'+'.pgf', bbox_inches='tight')
 
 
-bitStream = np.random.randint(0, 2, 32)
-modSig = NLFM.modulate(bitStream)
-#modSig = util.wgnSnr( modSig, -40 )
+# Cross correlation of symbols
+sig_t = NLFM.modulate( np.array([0]) )
+sig_t2 = NLFM.modulate( np.array([1]) )
 
-SCD, f, alpha = estimate.FAM(modSig, Fs = Fs, plot=False, method='conj', scale='linear')
-estimate.cyclicEstimator( SCD, f, alpha, bandLimited=True )
+Rxy = signal.correlate(sig_t, sig_t2, method='fft')
+Rxx = signal.correlate(sig_t, sig_t, method='fft')
+tau = np.linspace(-np.floor(len(Rxy)/2)/Fs, np.floor(len(Rxy)/2)/Fs, len(Rxy))
+RxyNorm_dB = util.pow2db(np.divide(np.abs(Rxy), np.max(np.abs(Rxx))))
 
-
-SCDplt = np.abs(SCD)
-fig = plt.figure()
-"""ax = fig.add_subplot(1, 1, 1)
-# Plot for positive frequencies
-im = ax.pcolormesh(alpha, f[np.intc(len(f)/2):-1], SCDplt[np.intc(len(f)/2):-1,:], edgecolors='none')
-ax.ticklabel_format(useMathText=True, scilimits=(0,3))
-#plt.title("Spectral Correlation Density")
-ax.set_xlabel("alpha [Hz]")
-ax.set_ylabel("f [Hz]")
-
-fig.colorbar(im)
+fig, ax = plt.subplots()
+ax.plot(tau, RxyNorm_dB)
+ax.grid()
+ax.set_xlabel('$t$ [Hz]')
+ax.set_ylabel('Normalized Correlation [dB]')
 plt.tight_layout()
-if pgf==True:
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_NLFM_32'+'_pgf_'+str(pgf)+'.pgf', bbox_inches='tight')"""
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
-ax.plot(alpha, np.abs(SCD[144,:]))
-ax.ticklabel_format(useMathText=True, scilimits=(0,3))
-ax.set_xlabel("alpha [Hz]")
-ax.set_ylabel("Correlation")
-if pgf==True:
-    plt.savefig(imagePath+'S_fc'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'S_fc'+'.pgf', bbox_inches='tight')
+if debug == False:
+    plt.savefig(imagePath + 'NLFM_Symbol_Xcorr.png', bbox_inches='tight')
+    plt.savefig(imagePath + 'NLFM_Symbol_Xcorr.pgf', bbox_inches='tight')
+
+
 
 plt.show()
