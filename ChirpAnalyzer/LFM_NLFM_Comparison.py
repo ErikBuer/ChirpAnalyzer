@@ -36,7 +36,7 @@ NLFM.fftLen = 2048
 
 
 # Synthesize the target autocorrelation function
-#indow_t = signal.chebwin(np.intc(2048), 60)
+#window_t = signal.chebwin(np.intc(2048), 40)
 window_t = signal.hamming(np.intc(2048))
 #window_t = signal.gaussian(np.intc(2048), 360)
 #window_t = signal.gaussian(np.intc(2048), 400)

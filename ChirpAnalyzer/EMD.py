@@ -71,7 +71,7 @@ axs = fig.subplots(len(imfs)+1,1)
 axs[0].plot(sig_t)
 axs[0].set_yticklabels([])
 axs[0].set_xticklabels([])
-axs[0].set_ylabel('$s(t)$')
+axs[0].set_ylabel('$\Re\{s(t)\}$')
 
 for i in range(1,len(imfs)+1):
     axs[i].plot(t, imfs[i-1])

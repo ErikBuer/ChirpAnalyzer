@@ -280,13 +280,14 @@ if debug == False:
 """
 ########################################################################
 # WVD MLE for LFM Symbol
- #! In Report
+ #! Don't comment out this!
 # Generate linear chirp
 FM = LFM.chirp(Fs=Fs,T=T, fStart=50e3, fStop=150e3, nChirps=4, direction='up')
 symbol=1
 sig_t = FM.getSymbolSig(symbol)
 sig_t = util.wgnSnr(sig_t, SNR)
-"""
+
+#! In Report
 IFmaxWVT = estimate.instFreq(sig_t, Fs, method='maxWVD')
 IFmaxWVT_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFmaxWVT))
 
@@ -295,11 +296,12 @@ time = np.linspace(-T/2,(T/2)-dt, len(IFmaxWVT))
 fig = plt.figure(figsize=(7, 2.5))
 ax = fig.add_subplot(211)
 ax.plot(time, IFmaxWVT, label='WVD MLE')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
 ax.set_ylim(0,200000)
 ax.set_ylabel('$f$ [Hz]')
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 ax.set_title('Estimated IF')
-#plt.legend()
+plt.legend()
 
 ax = fig.add_subplot(212)
 ax.plot(time, IFmaxWVT_AE)
@@ -314,10 +316,10 @@ plt.tight_layout()
 if debug == False:
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
-   """ 
+    
 ########################################################################
-""" # TODO
-IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
+#TODO
+"""IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
 IFmaxDHHT_AE = np.abs(np.subtract(NLFM.targetOmega_t, IFmaxDHHT))
 
 plt.figure()
@@ -339,14 +341,9 @@ plt.tight_layout()
 if debug== False:
     plt.savefig(imagePath+'IFmaxDHHT_'+SnrString+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'IFmaxDHHT_'+SnrString+'.pgf', bbox_inches='tight')
-    plt.savefig(imagePath+'Hilbert_'+SnrString+'.pgf', bbox_inches='tight')
 """
-
-"""# Generate linear chirp
-FM = LFM.chirp(Fs=Fs,T=T, fStart=50e3, fStop=150e3, nChirps=4, direction='up')
-symbol=1
-sig_t = FM.getSymbolSig(symbol)"""
-
+########################################################################
+"""#! In report
 # Generate linear chirp (simple)
 FM = LFM.chirp(Fs=Fs,T=T/4, fStart=20e3, fStop=80e3, nChirps=4, direction='up')
 sig_t = FM.getSymbolSig(1)
@@ -359,5 +356,6 @@ plt.title=('')
 
 if debug == False:
     plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.pgf', bbox_inches='tight')"""
+
 plt.show()

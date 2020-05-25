@@ -22,25 +22,25 @@ import pickle
 
 Fs = np.intc(802e3) # Receiver sample rate. #! Must be the same as the signals
 T = np.float(6e-3)  # Pulse duration.       #! Must be the same as the signals
-nIterations = 1 # 12
+nIterations = 6 # 12
 
 # Configure estimators
 estimators = []
 estimators.append(estimator('Barnes Two-Point FIR', estimate.instFreq, Fs=Fs, method='BarnesTwo'))
 estimators.append(estimator('Derivative', estimate.instFreq, Fs=Fs, method='derivative'))
-estimators.append(estimator('Hilbert Spectrum MLE', estimate.instFreq, Fs=Fs, method='maxDHHT'))
-#estimators.append(estimator('Piecewise Polynomial MLE', estimate.instFreq, Fs=Fs, method='polyMle', windowSize=50, order=2)) #! In report
+estimators.append(estimator('Hilbert-Huang MLE', estimate.instFreq, Fs=Fs, method='maxDHHT'))
+estimators.append(estimator('Piecewise Polynomial MLE', estimate.instFreq, Fs=Fs, method='polyMle', windowSize=50, order=2)) #! In report
 estimators.append(estimator('WVD MLE', estimate.instFreq, Fs=Fs, method='maxWVD'))
 
 # Create analysis object
 m_analysis = analysis('IF_Estimation', estimators=estimators, lossFcn='MAE')
 
 # Generate Eb/N0 range for statistics gathering.
-EbN0Start = 60#100
+EbN0Start = 100
 EbN0End = 20
 
 m_analysis.axis.displayName = '$E_b/N_0$ [dB]'
-m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, np.intc(abs(EbN0End-EbN0Start)/2))
+m_analysis.axis.displayVector = np.linspace(EbN0End, EbN0Start, np.intc(abs(EbN0End-EbN0Start)/4))
 m_analysis.axis.name = '$S/N$ [dB]'
 m_analysis.axis.vector = comm.EbN0toSNRdB(m_analysis.axis.displayVector, 2, Fs, 1/T)
 m_analysis.analyze(iterations=nIterations, parameter='omega_t')
