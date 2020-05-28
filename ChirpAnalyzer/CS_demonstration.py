@@ -8,7 +8,7 @@ import matplotlib as mpl
 import scipy.optimize as optimize
 import pickle
 
-debug=False
+debug=True
 imagePath = '../figures/cycloDemo/'
 
 if debug==False:
@@ -73,18 +73,18 @@ if debug == False:
 
 
 # Spectral Correlation Density
-SCD, f, alpha = estimate.FAM(modSig, Fs = Fs, plot=False, method='conj', scale='linear')
+SCD, f, alpha = estimate.FAM(modSig, Fs = Fs, plot=False, method='non-conj', scale='linear')
 estimate.cyclicEstimator( SCD, f, alpha, bandLimited=False )
 
 SCDplt = np.abs(SCD)
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 # Plot for positive frequencies
-im = ax.pcolormesh(alpha, f[np.intc(len(f)/2):-1], SCDplt[np.intc(len(f)/2):-1,:], edgecolors='none')
+im = ax.pcolormesh(alpha, f[np.intc(len(f)/2):len(f)-np.intc(len(f)/4)], SCDplt[np.intc(len(f)/2):len(f)-np.intc(len(f)/4),:], edgecolors='none')
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 #plt.title("Spectral Correlation Density")
 ax.set_xlabel("alpha [Hz]")
-ax.set_ylabel("f [Hz]")
+ax.set_ylabel("$f$ [Hz]")
 fig.colorbar(im)
 plt.tight_layout()
  #! in Report
@@ -104,14 +104,7 @@ if debug==False:
     plt.savefig(imagePath+'S_fc'+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'S_fc'+'.pgf', bbox_inches='tight')
 
-"""
-mean, var, skew, kurt = norm.stats(moments='mvsk')
-x = np.linspace(norm.ppf(0.01), norm.ppf(0.99), 100)
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
-ax.plot(x, norm.pdf(x), label='norm pdf')
-"""
 # Fit a GMM
 cyclicVec = np.abs(SCD[144,:])
 cyclicVec[np.intc(len(cyclicVec)/2)] = 0
@@ -195,12 +188,34 @@ fourFsymbAlpha = alpha0Index+4*np.intc(Fsymb/deltaAlpha)
 ax.plot(fPos, np.abs(SCDsingle[zeroF:index200kHz:, fourFsymbAlpha]), label='alpha=|4/T|')"""
 
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
-ax.set_xlabel("f [Hz]")
+ax.set_xlabel("$f$ [Hz]")
 ax.set_ylabel("Correlation")
 plt.tight_layout()
 ax.legend()
 if debug==False:
     plt.savefig(imagePath+'S_alpha'+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'S_alpha'+'.pgf', bbox_inches='tight')
+
+#####################################################################################################
+# Conjugate SCD
+SCD, f, alpha = estimate.FAM(modSig, Fs = Fs, plot=False, method='conj', scale='linear')
+estimate.cyclicEstimator( SCD, f, alpha, bandLimited=False )
+
+SCDplt = np.abs(SCD)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+# Plot for positive frequencies
+im = ax.pcolormesh(alpha, f[np.intc(len(f)/2):len(f)-np.intc(len(f)/4)], SCDplt[np.intc(len(f)/2):len(f)-np.intc(len(f)/4),:], edgecolors='none')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+#plt.title("Spectral Correlation Density")
+ax.set_xlabel("alpha [Hz]")
+ax.set_ylabel("$f$ [Hz]")
+fig.colorbar(im)
+plt.tight_layout()
+
+#! in Report
+if debug==False:
+    plt.savefig(imagePath+'SCD_CONJ_FM_32'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'SCD_CONJ_FM_32'+'.pgf', bbox_inches='tight')
 
 plt.show()

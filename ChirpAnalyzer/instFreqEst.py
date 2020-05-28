@@ -287,7 +287,7 @@ symbol=1
 sig_t = FM.getSymbolSig(symbol)
 sig_t = util.wgnSnr(sig_t, SNR)
 
-#! In Report
+"""#! In Report
 IFmaxWVT = estimate.instFreq(sig_t, Fs, method='maxWVD')
 IFmaxWVT_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFmaxWVT))
 
@@ -316,26 +316,27 @@ plt.tight_layout()
 if debug == False:
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
-    
+"""    
 ########################################################################
 #TODO
 """IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
 IFmaxDHHT_AE = np.abs(np.subtract(NLFM.targetOmega_t, IFmaxDHHT))
 
-plt.figure()
-plt.subplot(211)
-plt.plot(IFmaxDHHT, label='')
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IFmaxDHHT, label='')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
 plt.ylim(0,300000)
 plt.ylabel("$f$ [Hz]")
 plt.title('Estimated IF')
 plt.tight_layout()
 #plt.legend()
 
-plt.subplot(212)
-plt.plot(IFmaxDHHT_AE, label='Absolute Error')
-plt.ylabel("Error [Hz]")
-plt.title('Absolute Error')
-plt.tight_layout()
+ax = fig.add_subplot(212)
+ax.plot(IFmaxDHHT_AE, label='Absolute Error')
+ax.ylabel("Error [Hz]")
+ax.title('Absolute Error')
+ax.tight_layout()
 #plt.legend()
 
 if debug== False:
@@ -357,5 +358,35 @@ plt.title=('')
 if debug == False:
     plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'Hilbert_LFM_MOD_SIG'+'.pgf', bbox_inches='tight')"""
+
+########################################################################
+# Unwrap phase
+#! In report
+# Generate linear chirp (simple)
+FM = LFM.chirp(Fs=Fs,T=T/4, fStart=20e3, fStop=80e3, nChirps=4, direction='up')
+sig_t = FM.getSymbolSig(1)
+t = np.linspace(0, len(sig_t)/Fs, len(sig_t))
+
+phi_t = np.angle(sig_t)
+phi_tU = np.unwrap(np.angle(sig_t))
+
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(t, phi_t, label='$\Phi(t)$')
+ax.set_ylabel('Angle [rad]')
+ax.set_xticklabels([])
+ax.legend(loc='lower right')
+
+ax = fig.add_subplot(212)
+ax.plot(t, phi_tU, label='$\Phi(t)$ Unwrapped')
+ax.set_ylabel('Angle [rad]')
+ax.set_xlabel('$t$ [s]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.legend(loc='lower right')
+plt.tight_layout()
+
+if debug== False:
+    plt.savefig(imagePath+'unWrapPhase_LFM_'+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'unWrapPhase_LFM_'+'.pgf', bbox_inches='tight')
 
 plt.show()

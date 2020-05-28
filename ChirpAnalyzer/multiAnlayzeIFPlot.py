@@ -19,11 +19,29 @@ import matplotlib
 import pickle
 import os
 
-iterations = 1
+iterations = 5
 
-# Write to binary file
+# Read from binary file
 path = '../jobs/'
-filename = 'job'
+filename = 'jobNLFM'
+destination = path + filename + str(iterations) + '.pkl'
+# Save job to binary file
+with open(destination,'rb') as f:
+    m_analysis = pickle.load(f)
+
+fig, ax = m_analysis.plotResults(pgf=True, scale = 'semilogy')
+ax.legend(loc='upper right')
+imagePath = '../figures/IFestimation/'
+fileName = m_analysis.name +'_'+ str(iterations) + '_iterations' # str(m_analysis.iterations)
+plt.savefig(imagePath + fileName + '.png', bbox_inches='tight')
+plt.savefig(imagePath + fileName + '.pgf', bbox_inches='tight')
+
+######################################################################################################
+# LFM Case
+
+# Read from binary file
+path = '../jobs/'
+filename = 'jobLFM'
 destination = path + filename + str(iterations) + '.pkl'
 # Save job to binary file
 with open(destination,'rb') as f:

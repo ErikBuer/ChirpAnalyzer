@@ -152,7 +152,7 @@ class analysis:
                         m_waveform.packet=symbolStream
                         sig_t = FM.modulate( symbolStream )
                 else:
-                    sig_t = FM.getSymbolSig()
+                    sig_t = FM.getSymbolSig(1)
                     m_waveform.packet=1
 
             for m, SNR in enumerate(SNRVector):

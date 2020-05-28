@@ -38,7 +38,7 @@ plt.style.use('masterThesis')
 import matplotlib
 imagePath = '../figures/symRateEst/'
 
-if Debug==False:
+if Debug==True:
     mpl.use("pgf")
     mpl.rcParams.update({
         "pgf.texsystem": "lualatex",
