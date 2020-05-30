@@ -134,31 +134,36 @@ plt.title=('')
 plt.savefig(imagePath+'Hilbert_'+SnrString+'.png', bbox_inches='tight')
 """
 ########################################################################
-""" #! In report
+#! In report
 windowsize=50
-instFreqPolyMle = estimate.instFreq(sig_t, Fs, method='polyMle', windowSize=windowsize, order=2)
-polyML_AE = np.abs(np.subtract(NLFM.targetOmega_t, instFreqPolyMle))
+IFpolyMLE = estimate.instFreq(sig_t, Fs, method='polyMle', windowSize=windowsize, order=2)
+IFpolyMLE_AE = np.abs(np.subtract(NLFM.targetOmega_t, IFpolyMLE))
 
-plt.figure()
-plt.subplot(211)
-plt.plot(instFreqPolyMle, label='Piecewise Poly MLE')
-plt.ylim(0,200000)
-plt.ylabel('$f$ [Hz]')
-plt.title('Estimated IF')
-plt.tight_layout()
-#plt.legend()
+time = np.linspace(-T/2,(T/2)-dt, len(IFpolyMLE))
 
-plt.subplot(212)
-plt.plot(polyML_AE)
-plt.ylabel('Error [Hz]')
-plt.title('Absolute Error')
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IFpolyMLE, label='Piece-wise Polynomial MLE')
+ax.plot(time, NLFM.targetOmega_t, label='True IF')
+ax.set_ylim(0,200000)
+ax.set_ylabel('$f$ [Hz]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.set_title('Estimated IF')
+plt.legend(loc='upper right')
+
+ax = fig.add_subplot(212)
+ax.plot(time, IFpolyMLE_AE)
+ax.set_ylabel('Error [Hz]')
+ax.set_xlabel('$t$ [s]')
+ax.set_title('Absolute Error')
+#ax.set_ylim(10,10010)
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
 plt.tight_layout()
-#plt.legend()
 
 if debug == False:
     plt.savefig(imagePath+'polyMleIF_'+SnrString+'_windowsize_'+str(windowsize)+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'polyMleIF_'+SnrString+'_windowsize_'+str(windowsize)+'.pgf', bbox_inches='tight')
-"""
+
 ########################################################################
 """ #! Excluded
 instFreqPolyLS = estimate.instFreq(sig_t, Fs, method='polyLeastSquares', order=24)
@@ -279,7 +284,7 @@ if debug == False:
     plt.savefig(imagePath+'WVD_LFM_MOD'+'.pgf', bbox_inches='tight')
 """
 ########################################################################
-# WVD MLE for LFM Symbol
+# WVD MLE for troublesome LFM Symbol
  #! Don't comment out this!
 # Generate linear chirp
 FM = LFM.chirp(Fs=Fs,T=T, fStart=50e3, fStop=150e3, nChirps=4, direction='up')
@@ -316,7 +321,70 @@ plt.tight_layout()
 if debug == False:
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'IFmaxWVT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
-"""    
+"""
+########################################################################
+# HHT MLE for troublesome LFM Symbol
+#! In Report
+IFmaxHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
+IFmaxHHT_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFmaxHHT))
+
+time = np.linspace(-T/2,(T/2)-dt, len(IFmaxHHT))
+
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IFmaxHHT, label='HHT MLE')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
+ax.set_ylim(0,200000)
+ax.set_ylabel('$f$ [Hz]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.set_title('Estimated IF')
+plt.legend(loc='upper right')
+
+ax = fig.add_subplot(212)
+ax.plot(time, IFmaxHHT_AE)
+ax.set_ylabel('Error [Hz]')
+ax.set_xlabel('$t$ [s]')
+ax.set_title('Absolute Error')
+#ax.set_ylim(10,10010)
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+plt.tight_layout()
+#plt.legend()
+
+if debug == False:
+    plt.savefig(imagePath+'IFmaxHHT_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'IFmaxHHT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
+########################################################################
+# Barnes MLE for troublesome LFM Symbol
+#! In Report
+windowsize=50
+IFpolyMle = estimate.instFreq(sig_t, Fs, method='polyMle', windowSize=windowsize, order=2)
+IFpolyMle_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFpolyMle))
+
+time = np.linspace(-T/2,(T/2)-dt, len(IFpolyMle))
+
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IFpolyMle, label='Piece-wise Polynomial MLE')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
+ax.set_ylim(0,200000)
+ax.set_ylabel('$f$ [Hz]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.set_title('Estimated IF')
+plt.legend(loc='upper right')
+
+ax = fig.add_subplot(212)
+ax.plot(time, IFpolyMle_AE)
+ax.set_ylabel('Error [Hz]')
+ax.set_xlabel('$t$ [s]')
+ax.set_title('Absolute Error')
+#ax.set_ylim(10,10010)
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+plt.tight_layout()
+#plt.legend()
+
+if debug == False:
+    plt.savefig(imagePath+'IFpolyMle_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'IFpolyMle_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
 ########################################################################
 #TODO
 """IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
@@ -362,7 +430,7 @@ if debug == False:
 ########################################################################
 # Unwrap phase
 #! In report
-# Generate linear chirp (simple)
+"""# Generate linear chirp (simple)
 FM = LFM.chirp(Fs=Fs,T=T/4, fStart=20e3, fStop=80e3, nChirps=4, direction='up')
 sig_t = FM.getSymbolSig(1)
 t = np.linspace(0, len(sig_t)/Fs, len(sig_t))
@@ -388,5 +456,5 @@ plt.tight_layout()
 if debug== False:
     plt.savefig(imagePath+'unWrapPhase_LFM_'+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'unWrapPhase_LFM_'+'.pgf', bbox_inches='tight')
-
+"""
 plt.show()

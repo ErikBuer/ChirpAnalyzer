@@ -8,7 +8,7 @@ import matplotlib as mpl
 import scipy.optimize as optimize
 import pickle
 
-debug=True
+debug=False
 imagePath = '../figures/cycloDemo/'
 
 if debug==False:
@@ -88,9 +88,9 @@ ax.set_ylabel("$f$ [Hz]")
 fig.colorbar(im)
 plt.tight_layout()
  #! in Report
-"""if debug==False:
+if debug==False:
     plt.savefig(imagePath+'SCD_FM_32'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_FM_32'+'.pgf', bbox_inches='tight')"""
+    plt.savefig(imagePath+'SCD_FM_32'+'.pgf', bbox_inches='tight')
 
 # plot the alpha distribution for f=f_c
 fig = plt.figure()
@@ -214,8 +214,8 @@ fig.colorbar(im)
 plt.tight_layout()
 
 #! in Report
-if debug==False:
+"""if debug==False:
     plt.savefig(imagePath+'SCD_CONJ_FM_32'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'SCD_CONJ_FM_32'+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'SCD_CONJ_FM_32'+'.pgf', bbox_inches='tight')"""
 
 plt.show()
