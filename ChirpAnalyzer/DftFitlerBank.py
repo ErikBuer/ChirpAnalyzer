@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.style.use('masterThesis')
 import matplotlib as mpl
 
-pgf=True
+pgf=False
 imagePath = '../figures/'
 
 if pgf==True:
@@ -24,7 +24,7 @@ import rftool.estimation as estimate
 
 N=10
 def fun(omega,N):
-    return N*np.divide(np.sin(N*omega/2),N*np.sin(omega/2))
+    return np.divide(np.sin(N*omega/2),np.sin(omega/2))
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)

@@ -135,7 +135,7 @@ plt.savefig(imagePath+'Hilbert_'+SnrString+'.png', bbox_inches='tight')
 """
 ########################################################################
 #! In report
-windowsize=50
+"""windowsize=50
 IFpolyMLE = estimate.instFreq(sig_t, Fs, method='polyMle', windowSize=windowsize, order=2)
 IFpolyMLE_AE = np.abs(np.subtract(NLFM.targetOmega_t, IFpolyMLE))
 
@@ -162,7 +162,7 @@ plt.tight_layout()
 
 if debug == False:
     plt.savefig(imagePath+'polyMleIF_'+SnrString+'_windowsize_'+str(windowsize)+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'polyMleIF_'+SnrString+'_windowsize_'+str(windowsize)+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'polyMleIF_'+SnrString+'_windowsize_'+str(windowsize)+'.pgf', bbox_inches='tight')"""
 
 ########################################################################
 """ #! Excluded
@@ -281,8 +281,8 @@ plt.tight_layout()
 
 if debug == False:
     plt.savefig(imagePath+'WVD_LFM_MOD'+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'WVD_LFM_MOD'+'.pgf', bbox_inches='tight')
-"""
+    plt.savefig(imagePath+'WVD_LFM_MOD'+'.pgf', bbox_inches='tight')"""
+
 ########################################################################
 # WVD MLE for troublesome LFM Symbol
  #! Don't comment out this!
@@ -325,7 +325,7 @@ if debug == False:
 ########################################################################
 # HHT MLE for troublesome LFM Symbol
 #! In Report
-IFmaxHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
+"""IFmaxHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
 IFmaxHHT_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFmaxHHT))
 
 time = np.linspace(-T/2,(T/2)-dt, len(IFmaxHHT))
@@ -352,11 +352,11 @@ plt.tight_layout()
 
 if debug == False:
     plt.savefig(imagePath+'IFmaxHHT_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'IFmaxHHT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'IFmaxHHT_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')"""
 ########################################################################
-# Barnes MLE for troublesome LFM Symbol
+# Poly MLE for troublesome LFM Symbol
 #! In Report
-windowsize=50
+"""windowsize=50
 IFpolyMle = estimate.instFreq(sig_t, Fs, method='polyMle', windowSize=windowsize, order=2)
 IFpolyMle_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IFpolyMle))
 
@@ -384,7 +384,69 @@ plt.tight_layout()
 
 if debug == False:
     plt.savefig(imagePath+'IFpolyMle_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
-    plt.savefig(imagePath+'IFpolyMle_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')
+    plt.savefig(imagePath+'IFpolyMle_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')"""
+########################################################################
+# Derivative method for troublesome LFM Symbol
+#! In Report
+"""IF = estimate.instFreq(sig_t, Fs)# , method='maxDHHT')
+IF_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IF))
+
+time = np.linspace(-T/2,(T/2)-dt, len(IF))
+
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IF, label='Derivative Method')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
+ax.set_ylim(0,200000)
+ax.set_ylabel('$f$ [Hz]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.set_title('Estimated IF')
+plt.legend(loc='upper right')
+
+ax = fig.add_subplot(212)
+ax.plot(time, IF_AE)
+ax.set_ylabel('Error [Hz]')
+ax.set_xlabel('$t$ [s]')
+ax.set_title('Absolute Error')
+#ax.set_ylim(10,10010)
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+plt.tight_layout()
+#plt.legend()
+
+if debug == False:
+    plt.savefig(imagePath+'IFDerivative_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'IFDerivative_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')"""
+########################################################################
+# Derivative method for troublesome LFM Symbol
+#! In Report
+"""IF = estimate.instFreq(sig_t, Fs, method='BarnesTwo')
+IF_AE = np.abs(np.subtract(FM.getSymbolIF(symbol), IF))
+
+time = np.linspace(-T/2,(T/2)-dt, len(IF))
+
+fig = plt.figure(figsize=(7, 2.5))
+ax = fig.add_subplot(211)
+ax.plot(time, IF, label='Barnes Method')
+ax.plot(time, FM.getSymbolIF(symbol), label='True IF')
+ax.set_ylim(0,200000)
+ax.set_ylabel('$f$ [Hz]')
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+ax.set_title('Estimated IF')
+plt.legend(loc='upper right')
+
+ax = fig.add_subplot(212)
+ax.plot(time, IF_AE)
+ax.set_ylabel('Error [Hz]')
+ax.set_xlabel('$t$ [s]')
+ax.set_title('Absolute Error')
+#ax.set_ylim(10,10010)
+ax.ticklabel_format(useMathText=True, scilimits=(0,3))
+plt.tight_layout()
+#plt.legend()
+
+if debug == False:
+    plt.savefig(imagePath+'IFBarness_MOD_LFM_'+SnrString+'.png', bbox_inches='tight')
+    plt.savefig(imagePath+'IFBarness_MOD_LFM_'+SnrString+'.pgf', bbox_inches='tight')"""
 ########################################################################
 #TODO
 """IFmaxDHHT = estimate.instFreq(sig_t, Fs, method='maxDHHT')
@@ -430,7 +492,7 @@ if debug == False:
 ########################################################################
 # Unwrap phase
 #! In report
-"""# Generate linear chirp (simple)
+# Generate linear chirp (simple)
 FM = LFM.chirp(Fs=Fs,T=T/4, fStart=20e3, fStop=80e3, nChirps=4, direction='up')
 sig_t = FM.getSymbolSig(1)
 t = np.linspace(0, len(sig_t)/Fs, len(sig_t))
@@ -440,13 +502,13 @@ phi_tU = np.unwrap(np.angle(sig_t))
 
 fig = plt.figure(figsize=(7, 2.5))
 ax = fig.add_subplot(211)
-ax.plot(t, phi_t, label='$\Phi(t)$')
+ax.plot(t, phi_t, label='$\Phi(t)$, Wrapped Phase')
 ax.set_ylabel('Angle [rad]')
 ax.set_xticklabels([])
 ax.legend(loc='lower right')
 
 ax = fig.add_subplot(212)
-ax.plot(t, phi_tU, label='$\Phi(t)$ Unwrapped')
+ax.plot(t, phi_tU, label='$\Phi(t)$, Unwrapped Phase')
 ax.set_ylabel('Angle [rad]')
 ax.set_xlabel('$t$ [s]')
 ax.ticklabel_format(useMathText=True, scilimits=(0,3))
@@ -456,5 +518,5 @@ plt.tight_layout()
 if debug== False:
     plt.savefig(imagePath+'unWrapPhase_LFM_'+'.png', bbox_inches='tight')
     plt.savefig(imagePath+'unWrapPhase_LFM_'+'.pgf', bbox_inches='tight')
-"""
+
 plt.show()
